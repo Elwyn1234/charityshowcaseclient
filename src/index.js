@@ -17,6 +17,32 @@ const fontSize = () => ({
     fontSize: "0.5rem"
 })
 
+class CharityProject extends React.Component {
+  constructor(props) {
+    super(props)
+
+    let charityProjectName = window.location.pathname.split("/")[2]
+    let charityProject = this.props.v.find((charityProject) => {
+      return charityProject.Name === charityProjectName
+    })
+
+    this.state = {
+      charityProject: charityProject
+    }
+  }
+
+  render() {
+    return (
+      <div style={{width: "85%", margin: "auto", ...marginTop()}}>
+            <CharityProjectCard v={this.state.charityProject} width={"100%"} showLongDescription={true}/>
+        <Button href={`/editCharityProject/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
+          <Typography variant='body1'>Edit</Typography>
+        </Button>
+      </div>
+    );
+  }
+}
+
 class Register extends React.Component {
   constructor(props) {
     super(props)
@@ -218,16 +244,17 @@ class Login extends React.Component {
 class TechnologySelect extends React.Component {
   render() {
     const menuItems = []
+    console.log(this.props.technologies)
     for (let i = 0; i < this.props.technologies.length; i++) {
       menuItems.push(<MenuItem value={this.props.technologies[i]} dense={true} key={i}>{this.props.technologies[i]}</MenuItem>)
     }
     return (
       <FormControl style={{...marginTop(), width: "30%"}} size="small">
-        <InputLabel id="tech-stack-label1"> Tech 1</InputLabel>
+        <InputLabel id="tech-stack-label1">{`Tech ${this.props.index + 1}`}</InputLabel>
         <Select
           labelId='tech-stack-label1'
-          label="Tech 1"
-          value={this.props.name}
+          label={`Tech ${this.props.index + 1}`}
+          value='go'
           required
           error={this.props.error}
           onChange={(e) => {
@@ -243,12 +270,33 @@ class TechnologySelect extends React.Component {
   }
 }
 
-class CreateCharityProject extends React.Component {
+class ManageCharityProject extends React.Component {
   constructor(props) {
     super(props)
 
+    let technologyCount = 3;
+    let charityProject = {
+      Name: '',
+      ShortDescription: '',
+      LongDescription: '',
+      Technologies: []
+    }
+    for (let i = 0; i < 3; i++) {
+      charityProject.Technologies.push({ name: '', error: false })
+    }
+
+    if (this.props.method === "put") {
+      let charityProjectName = window.location.pathname.split("/")[2]
+      charityProject = this.props.v.find((charityProject) => {
+        return charityProject.Name === charityProjectName
+      })
+      charityProject.Technologies = charityProject.Technologies.map((technology) => {
+        return { oldName: technology.Name, name: technology.Name, error: false }
+      })
+    }
+
     this.state = {
-      technologyCount: 3, // TODO: aksjfh
+      technologyCount: technologyCount, // TODO: aksjfh
       technology: {
         name: {
           value: '',
@@ -257,102 +305,27 @@ class CreateCharityProject extends React.Component {
         image: null,
       },
       charityProject: {
+        oldName: charityProject.Name,
         name: {
-          value: '',
+          value: charityProject.Name,
           error: false,
         },
         shortDescription: {
-          value: '',
+          value: charityProject.ShortDescription,
           error: false,
         },
-        longDescription: '',
-        technologies: [],
+        longDescription: charityProject.LongDescription,
+        technologies: charityProject.Technologies,
       },
-      technologies: [],
+      technologies: null, // a list of all technologies from which the user can select from
     }
 
-    axios.get('http://localhost:8743/getTechnologies')
+    axios.get('http://localhost:8743/technologies')
       .then((technologies) => {
         console.log(technologies.data)
         this.state.technologies = technologies.data
-        for (let i = 0; i < 3; i++) {
-          this.state.charityProject.technologies.push({ name: '', error: false })
-        }
         this.setState(this.state)
       });
-  }
-
-  createCharityProject = () => {
-    let valid = true;
-    if (this.state.charityProject.name.value === null || this.state.charityProject.name.value === "") {
-      this.state.charityProject.name.error = true
-      valid = false
-    }
-    if (this.state.charityProject.shortDescription.value === null || this.state.charityProject.shortDescription.value === "") {
-      this.state.charityProject.shortDescription.error = true
-      valid = false
-    }
-    this.state.charityProject.technologies.forEach((technology, i) => {
-      if (technology.name === null || technology.name === '') {
-        technology.error = true
-        valid = false
-      }
-      this.state.charityProject.technologies.forEach((otherTechnology, j) => {
-        if (i === j) return
-        if (technology.name === otherTechnology.name) {
-          technology.error = true
-          otherTechnology.error = true
-          valid = false
-        }
-      })
-    })
-    if (!valid) {
-      this.setState(this.state)
-      return
-    }
-
-    let charityProject = {
-      name: this.state.charityProject.name.value,
-      shortDescription: this.state.charityProject.shortDescription.value,
-      longDescription: this.state.charityProject.longDescription,
-      techStack: []
-    }
-    this.state.charityProject.technologies.forEach((technology) => {
-      charityProject.techStack.push({name: technology.name})
-    })
-    const createCharityProjectRequest = JSON.stringify(charityProject)
-
-    console.log("createCharityProject: createCharityProjectRequest", createCharityProjectRequest)
-    axios.post('http://localhost:8743/createCharityProject', createCharityProjectRequest)
-      .then(() => {
-        console.log("createCharityProject Response handler: Request was successful!");
-      });
-  }
-
-  createTechnology = () => { // TODO: image uploading is not implemented, currently the name is the only field used
-    if (this.state.technology.name.value === null || this.state.technology.name.value === "") {
-      this.state.technology.name.error = true
-      this.setState(this.state)
-      return
-    }
-    let technology = {
-      name: this.state.technology.name.value
-    }
-    const createTechnologyRequest = JSON.stringify(technology)
-
-    console.log("createTechnology: createTechnologyRequest", createTechnologyRequest)
-    axios.post('http://localhost:8743/createTechnology', createTechnologyRequest)
-      .then(() => {
-        console.log("createTechnology Response handler: Request was successful!");
-      });
-  }
-
-  handleTechnologySelectChange = (name, error, i) => {
-    this.state.charityProject.technologies[i] = {
-      name: name,
-      error: error,
-    }
-    this.setState(this.state)
   }
 
   render() {
@@ -369,6 +342,7 @@ class CreateCharityProject extends React.Component {
             style={marginTop()}
             size="small"
             required
+            value={this.state.charityProject.name.value}
             error={this.state.charityProject.name.error}
             onChange={(e) => {
               if (e.target.value !== null && e.target.value !== '') {
@@ -383,6 +357,7 @@ class CreateCharityProject extends React.Component {
             style={marginTop()}
             size="small"
             required
+            value={this.state.charityProject.shortDescription.value}
             error={this.state.charityProject.shortDescription.error}
             onChange={(e) => {
               if (e.target.value !== null && e.target.value !== '') {
@@ -396,15 +371,18 @@ class CreateCharityProject extends React.Component {
             label="Description"
             style={marginTop()}
             size="small"
+            value={this.state.charityProject.longDescription}
             onChange={(e) => {
               this.state.charityProject.longDescription = e.target.value
               this.setState(this.state)
             }}
           />
   
-          <Stack direction="row" spacing="auto" justifyContent="center">
-            {technologySelects}
-          </Stack>
+          { this.state.technologies && 
+            <Stack direction="row" spacing="auto" justifyContent="center">
+              {technologySelects}
+            </Stack>
+          }
   
           <Button
             variant="contained"
@@ -423,7 +401,7 @@ class CreateCharityProject extends React.Component {
             style={{...marginTop(), width: "max-content"}}
             onClick={this.createCharityProject}
           >
-            Create
+            { this.props.method == "post" ? "Create" : "Update" }
           </Button>
         </FormGroup>
 
@@ -465,15 +443,89 @@ class CreateCharityProject extends React.Component {
       </Stack>
     )
   }
+
+  createCharityProject = () => {
+    let valid = true;
+    if (this.state.charityProject.name.value === null || this.state.charityProject.name.value === "") {
+      this.state.charityProject.name.error = true
+      valid = false
+    }
+    if (this.state.charityProject.shortDescription.value === null || this.state.charityProject.shortDescription.value === "") {
+      this.state.charityProject.shortDescription.error = true
+      valid = false
+    }
+    this.state.charityProject.technologies.forEach((technology, i) => {
+      if (technology.name === null || technology.name === '') {
+        technology.error = true
+        valid = false
+      }
+      this.state.charityProject.technologies.forEach((otherTechnology, j) => {
+        if (i === j) return
+        if (technology.name === otherTechnology.name) {
+          technology.error = true
+          otherTechnology.error = true
+          valid = false
+        }
+      })
+    })
+    if (!valid) {
+      this.setState(this.state)
+      return
+    }
+
+    let charityProject = {
+      oldName: this.state.charityProject.oldName,
+      name: this.state.charityProject.name.value,
+      shortDescription: this.state.charityProject.shortDescription.value,
+      longDescription: this.state.charityProject.longDescription,
+      technologies: []
+    }
+    this.state.charityProject.technologies.forEach((technology) => {
+      charityProject.technologies.push({oldName: technology.oldName, name: technology.name})
+    })
+    const createCharityProjectRequest = JSON.stringify(charityProject)
+
+    console.log("createCharityProject: createCharityProjectRequest", createCharityProjectRequest)
+    axios({method: this.props.method, url: 'http://localhost:8743/charity-projects', data: createCharityProjectRequest})
+      .then(() => {
+        console.log("createCharityProject Response handler: Request was successful!");
+      });
+  }
+
+  createTechnology = () => { // TODO: image uploading is not implemented, currently the name is the only field used
+    if (this.state.technology.name.value === null || this.state.technology.name.value === "") {
+      this.state.technology.name.error = true
+      this.setState(this.state)
+      return
+    }
+    let technology = {
+      name: this.state.technology.name.value
+    }
+    const createTechnologyRequest = JSON.stringify(technology)
+
+    console.log("createTechnology: createTechnologyRequest", createTechnologyRequest)
+    axios.post('http://localhost:8743/technologies', createTechnologyRequest)
+      .then(() => {
+        console.log("createTechnology Response handler: Request was successful!");
+      });
+  }
+
+  handleTechnologySelectChange = (name, error, i) => {
+    this.state.charityProject.technologies[i] = {
+      name: name,
+      error: error,
+    }
+    this.setState(this.state)
+  }
 }
           //<Button variant="contained" style={{...fontSize(), ...{marginTop: "10px", width: "20%"}}}>Create</Button>
 
 class CharityProjectCard extends React.Component {
   render() {
-    console.log("PROPS.V.TechStack: ", this.props.v.TechStack)
-    console.log("PROPS.V.TechStack.SVG: ", this.props.v.TechStack[0].SVG)
+    console.log("PROPS.V.Technologies: ", this.props.v.Technologies)
+    console.log("PROPS.V.Technologies.SVG: ", this.props.v.Technologies[0].SVG)
     return (
-      <Card style={{width: "32%"}}>
+      <Card style={{width: this.props.width, cursor: "pointer"}} onClick={() => window.location.href=`/charityProject/${this.props.v.Name}`}>
         <CardContent>
           <Typography variant='h5'>{ this.props.v.Name }</Typography>
         </CardContent>
@@ -481,38 +533,43 @@ class CharityProjectCard extends React.Component {
           <Typography variant='body1'>{ this.props.v.ShortDescription }</Typography>
         </CardContent>
         <CardContent style={{margin: "auto", width: "max-content"}}>
-          <Tooltip title={this.props.v.TechStack[0].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.TechStack[0].Name}>
+          <Tooltip title={this.props.v.Technologies[0].Name}>
+            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.Technologies[0].Name}>
               <img 
-                src={this.props.v.TechStack[0].SVG !== '' ? this.props.v.TechStack[0].SVG : "assets/icons/icons8-react.svg"}
-                alt={this.props.v.TechStack[0].Name}
+                src={this.props.v.Technologies[0].SVG !== '' ? this.props.v.Technologies[0].SVG : "/assets/icons/icons8-react.svg"}
+                alt={this.props.v.Technologies[0].Name}
                 width="50"
                 height="50"
               />
             </IconButton>
           </Tooltip>
-          <Tooltip title={this.props.v.TechStack[1].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.TechStack[1].Name}>
+          <Tooltip title={this.props.v.Technologies[1].Name}>
+            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.Technologies[1].Name}>
               <img 
-                src={this.props.v.TechStack[1].SVG !== '' ? this.props.v.TechStack[1].SVG : "assets/icons/default-technology-icon.svg"}
-                alt={this.props.v.TechStack[1].Name}
+                src={this.props.v.Technologies[1].SVG !== '' ? this.props.v.Technologies[1].SVG : "/assets/icons/default-technology-icon.svg"}
+                alt={this.props.v.Technologies[1].Name}
                 width="50"
                 height="50"
               />
             </IconButton>
           </Tooltip>
-          <Tooltip title={this.props.v.TechStack[2].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.TechStack[2].Name}>
+          <Tooltip title={this.props.v.Technologies[2].Name}>
+            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.Technologies[2].Name}>
               <img 
-                src={this.props.v.TechStack[2].SVG !== '' ? this.props.v.TechStack[2].SVG : "assets/icons/default-technology-icon.svg"}
-                alt={this.props.v.TechStack[2].Name}
+                src={this.props.v.Technologies[2].SVG !== '' ? this.props.v.Technologies[2].SVG : "/assets/icons/default-technology-icon.svg"}
+                alt={this.props.v.Technologies[2].Name}
                 width="50"
                 height="50"
               />
             </IconButton>
           </Tooltip>
         </CardContent>
-      </Card>
+        { this.props.showLongDescription && 
+          <CardContent >
+            <Typography variant='body1'>{ this.props.v.ShortDescription }</Typography>
+          </CardContent>
+        }
+        </Card>
     );
   }
 }
@@ -546,7 +603,7 @@ class Home extends React.Component {
               if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
                 value.ShortDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
                 value.LongDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.TechStack.find((technology) => {
+                value.Technologies.find((technology) => {
                   if (technology.Name.toLowerCase().match(this.state.filter.toLowerCase()))
                     return true
                   return false
@@ -555,13 +612,13 @@ class Home extends React.Component {
                 return true
               return false
               /*
-              value.TechStack.forEach((technology) => {
+              value.Technologies.forEach((technology) => {
                 if (technology.Name.match(this.state.filter))
                   match = true
               })
               return match
               */
-            }).map((charityProject, i) => <CharityProjectCard v={charityProject} key={i}/>)
+            }).map((charityProject, i) => <CharityProjectCard v={charityProject} key={i} width={"32%"} showLongDescription={false}/>)
           }
         </Stack>
         <Button href="/createCharityProject" variant="contained" style={marginTop()}>
@@ -597,7 +654,9 @@ class App extends React.Component {
         </AppBar>
         <Routes>
           <Route path="/" element={<Home v={this.props.v}/>}/>
-          <Route path="/createCharityProject" element={<CreateCharityProject/>}/>
+          <Route path="/createCharityProject" element={<ManageCharityProject method="post"/>}/>
+          <Route path="/editCharityProject/:name" element={<ManageCharityProject v={this.props.v} method="put"/>}/>
+          <Route path="/charityProject/:name" element={<CharityProject v={this.props.v}/>}/>
           <Route path="/login" element={<Login onAuthenticated={(user) => {
             this.state.loggedInUser = user
             this.setState(this.state)
@@ -612,9 +671,9 @@ class App extends React.Component {
   }
 }
 
-axios.get('http://localhost:8743/getCharityProjects', {params: {page: 0}})
-  .then((charityProject) => {
-    root.render(<App v={charityProject.data}/>)
+axios.get('http://localhost:8743/charity-projects', {params: {page: 0}})
+  .then((charityProjects) => {
+    root.render(<App v={charityProjects.data}/>)
   });
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -642,6 +701,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 //
 //  createTechnology:
 //  TODO:
+//    add feedback on successful creation
 //    close sql connections
 //    image uploading not handled
 //  DONE:
