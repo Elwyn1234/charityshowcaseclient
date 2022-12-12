@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import Card from '@mui/material/Card';
-import {AppBar, Box, Button, CardContent, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Toolbar, Tooltip, Typography} from '@mui/material';
+import {AppBar, Box, Button, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Toolbar, Tooltip, Typography} from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
 import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom';
@@ -21,21 +21,28 @@ class CharityProject extends React.Component {
   constructor(props) {
     super(props)
 
-    let charityProjectName = window.location.pathname.split("/")[2]
-    let charityProject = this.props.v.find((charityProject) => {
-      return charityProject.Name === charityProjectName
-    })
-
     this.state = {
-      charityProject: charityProject
+      loading: true,
     }
+
+    let charityProjectName = window.location.pathname.split("/")[2]
+    axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`)
+      .then((charityProject) => {
+        this.state.loading = false
+        this.state.charityProject = charityProject.data
+        console.log(this.state)
+        this.setState(this.state)
+      });
   }
 
   render() {
+    if (this.state.loading)
+      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
+
     return (
       <div style={{width: "85%", margin: "auto", ...marginTop()}}>
-            <CharityProjectCard v={this.state.charityProject} width={"100%"} showLongDescription={true}/>
-        <Button href={`/editCharityProject/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
+        <CharityProjectCard charityProject={this.state.charityProject} width={"100%"} showLongDescription={true}/>
+        <Button href={`/edit-charity-project/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
           <Typography variant='body1'>Edit</Typography>
         </Button>
       </div>
@@ -254,7 +261,7 @@ class TechnologySelect extends React.Component {
         <Select
           labelId='tech-stack-label1'
           label={`Tech ${this.props.index + 1}`}
-          value='go'
+          value={this.props.name}
           required
           error={this.props.error}
           onChange={(e) => {
@@ -274,29 +281,9 @@ class ManageCharityProject extends React.Component {
   constructor(props) {
     super(props)
 
-    let technologyCount = 3;
-    let charityProject = {
-      Name: '',
-      ShortDescription: '',
-      LongDescription: '',
-      Technologies: []
-    }
-    for (let i = 0; i < 3; i++) {
-      charityProject.Technologies.push({ name: '', error: false })
-    }
-
-    if (this.props.method === "put") {
-      let charityProjectName = window.location.pathname.split("/")[2]
-      charityProject = this.props.v.find((charityProject) => {
-        return charityProject.Name === charityProjectName
-      })
-      charityProject.Technologies = charityProject.Technologies.map((technology) => {
-        return { oldName: technology.Name, name: technology.Name, error: false }
-      })
-    }
-
     this.state = {
-      technologyCount: technologyCount, // TODO: aksjfh
+      loading: true,
+      technologyCount: 3, // TODO: aksjfh
       technology: {
         name: {
           value: '',
@@ -305,33 +292,62 @@ class ManageCharityProject extends React.Component {
         image: null,
       },
       charityProject: {
-        oldName: charityProject.Name,
+        oldName: '',
         name: {
-          value: charityProject.Name,
+          value: '',
           error: false,
         },
         shortDescription: {
-          value: charityProject.ShortDescription,
+          value: '',
           error: false,
         },
-        longDescription: charityProject.LongDescription,
-        technologies: charityProject.Technologies,
+        longDescription: '',
+        technologies: [],
       },
       technologies: null, // a list of all technologies from which the user can select from
     }
+    for (let i = 0; i < 3; i++) {
+      this.state.charityProject.technologies.push({ name: '', error: false })
+    }
 
-    axios.get('http://localhost:8743/technologies')
-      .then((technologies) => {
-        console.log(technologies.data)
-        this.state.technologies = technologies.data
+    let promises = []
+    promises.push(axios.get('http://localhost:8743/technologies'))
+    if (this.props.method === "put") {
+      let charityProjectName = window.location.pathname.split("/")[2]
+      promises.push(axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`))
+    }
+
+    Promise.all(promises)
+      .then((responses) => {
+        let technologies = responses[0].data
+        let charityProject = responses[1]?.data
+        console.log("tech: ", technologies)
+        if (charityProject) console.log("charProj: ", charityProject)
+        this.state.loading = false
+        this.state.technologies = technologies
+
+        if (charityProject) {
+          this.state.charityProject.oldName = charityProject.Name
+          this.state.charityProject.name.value = charityProject.Name
+          this.state.charityProject.shortDescription.value = charityProject.ShortDescription
+          this.state.charityProject.longDescription = charityProject.LongDescription
+          this.state.charityProject.technologies = charityProject.Technologies.map((technology) => {
+            return { oldName: technology.Name, name: technology.Name, error: false }
+          })
+        }
         this.setState(this.state)
       });
   }
 
   render() {
+    if (this.state.loading)
+      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
+
     let technologySelects = []
+    console.log(this.state.charityProject)
     this.state.charityProject.technologies.forEach((technology, i) => {
       technologySelects.push(<TechnologySelect name={technology.name} error={technology.error} onChange={this.handleTechnologySelectChange} index={i} key={i} technologies={this.state.technologies}/>)
+      console.log(technologySelects)
     })
     return (
       <Stack direction="row" spacing={2} justifyContent="center" style={marginTop()}>
@@ -378,11 +394,9 @@ class ManageCharityProject extends React.Component {
             }}
           />
   
-          { this.state.technologies && 
-            <Stack direction="row" spacing="auto" justifyContent="center">
-              {technologySelects}
-            </Stack>
-          }
+          <Stack direction="row" spacing="auto" justifyContent="center">
+            {technologySelects}
+          </Stack>
   
           <Button
             variant="contained"
@@ -486,7 +500,7 @@ class ManageCharityProject extends React.Component {
     const createCharityProjectRequest = JSON.stringify(charityProject)
 
     console.log("createCharityProject: createCharityProjectRequest", createCharityProjectRequest)
-    axios({method: this.props.method, url: 'http://localhost:8743/charity-projects', data: createCharityProjectRequest})
+    axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest})
       .then(() => {
         console.log("createCharityProject Response handler: Request was successful!");
       });
@@ -522,42 +536,40 @@ class ManageCharityProject extends React.Component {
 
 class CharityProjectCard extends React.Component {
   render() {
-    console.log("PROPS.V.Technologies: ", this.props.v.Technologies)
-    console.log("PROPS.V.Technologies.SVG: ", this.props.v.Technologies[0].SVG)
     return (
-      <Card style={{width: this.props.width, cursor: "pointer"}} onClick={() => window.location.href=`/charityProject/${this.props.v.Name}`}>
+      <Card style={{width: this.props.width, cursor: "pointer"}} onClick={() => window.location.href=`/charity-project/${this.props.charityProject.Name}`}>
         <CardContent>
-          <Typography variant='h5'>{ this.props.v.Name }</Typography>
+          <Typography variant='h5'>{ this.props.charityProject.Name }</Typography>
         </CardContent>
         <CardContent >
-          <Typography variant='body1'>{ this.props.v.ShortDescription }</Typography>
+          <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
         </CardContent>
         <CardContent style={{margin: "auto", width: "max-content"}}>
-          <Tooltip title={this.props.v.Technologies[0].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.Technologies[0].Name}>
+          <Tooltip title={this.props.charityProject.Technologies[0].Name}>
+            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[0].Name}>
               <img 
-                src={this.props.v.Technologies[0].SVG !== '' ? this.props.v.Technologies[0].SVG : "/assets/icons/icons8-react.svg"}
-                alt={this.props.v.Technologies[0].Name}
+                src={this.props.charityProject.Technologies[0].SVG !== '' ? this.props.charityProject.Technologies[0].SVG : "/assets/icons/default-technology-icon.svg"}
+                alt={this.props.charityProject.Technologies[0].Name}
                 width="50"
                 height="50"
               />
             </IconButton>
           </Tooltip>
-          <Tooltip title={this.props.v.Technologies[1].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.Technologies[1].Name}>
+          <Tooltip title={this.props.charityProject.Technologies[1].Name}>
+            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[1].Name}>
               <img 
-                src={this.props.v.Technologies[1].SVG !== '' ? this.props.v.Technologies[1].SVG : "/assets/icons/default-technology-icon.svg"}
-                alt={this.props.v.Technologies[1].Name}
+                src={this.props.charityProject.Technologies[1].SVG !== '' ? this.props.charityProject.Technologies[1].SVG : "/assets/icons/default-technology-icon.svg"}
+                alt={this.props.charityProject.Technologies[1].Name}
                 width="50"
                 height="50"
               />
             </IconButton>
           </Tooltip>
-          <Tooltip title={this.props.v.Technologies[2].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.v.Technologies[2].Name}>
+          <Tooltip title={this.props.charityProject.Technologies[2].Name}>
+            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[2].Name}>
               <img 
-                src={this.props.v.Technologies[2].SVG !== '' ? this.props.v.Technologies[2].SVG : "/assets/icons/default-technology-icon.svg"}
-                alt={this.props.v.Technologies[2].Name}
+                src={this.props.charityProject.Technologies[2].SVG !== '' ? this.props.charityProject.Technologies[2].SVG : "/assets/icons/default-technology-icon.svg"}
+                alt={this.props.charityProject.Technologies[2].Name}
                 width="50"
                 height="50"
               />
@@ -566,7 +578,7 @@ class CharityProjectCard extends React.Component {
         </CardContent>
         { this.props.showLongDescription && 
           <CardContent >
-            <Typography variant='body1'>{ this.props.v.ShortDescription }</Typography>
+            <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
           </CardContent>
         }
         </Card>
@@ -579,11 +591,22 @@ class Home extends React.Component {
     super(props)
 
     this.state = {
-      filter: ""
+      filter: "",
+      loading: true,
     }
+
+    axios.get('http://localhost:8743/charity-projects/')
+      .then((charityProjects) => {
+        this.state.loading = false
+        this.state.charityProjects = charityProjects.data
+        this.setState(this.state)
+      }).catch(() => { console.error("hi") });
   }
 
   render() {
+    if (this.state.loading)
+      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
+
     return (
       <div style={{width: "85%", margin: "auto", ...marginTop()}}>
         <TextField
@@ -597,7 +620,7 @@ class Home extends React.Component {
         />
         <Stack direction="row" spacing={"2%"} justifyContent="center" style={marginTop()}>
           {
-            this.props.v.filter((value) => {
+            this.state.charityProjects.filter((value) => {
               console.log(this.state.filter)
               //let match = false
               if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
@@ -618,10 +641,10 @@ class Home extends React.Component {
               })
               return match
               */
-            }).map((charityProject, i) => <CharityProjectCard v={charityProject} key={i} width={"32%"} showLongDescription={false}/>)
+            }).map((charityProject, i) => <CharityProjectCard charityProject={charityProject} key={i} width={"32%"} showLongDescription={false}/>)
           }
         </Stack>
-        <Button href="/createCharityProject" variant="contained" style={marginTop()}>
+        <Button href="/create-charity-project" variant="contained" style={marginTop()}>
           <Typography variant='body1'>New Charity Project</Typography>
         </Button>
       </div>
@@ -643,7 +666,7 @@ class App extends React.Component {
             <Typography variant='h5' style={{cursor: "pointer", width: "max-content"}} onClick={() => window.location.href="/"}>Charity Showcase</Typography>
             </div>
             <Button color='inherit' style={marginLeft()} href="/archive">Archive</Button>
-            <Button color='inherit' style={marginLeft()} href="/userManagement">User Management</Button>
+            <Button color='inherit' style={marginLeft()} href="/user-management">User Management</Button>
             <Button color='inherit' style={marginLeft()} href="/login" onClick={() => {
               this.state.loggedInUser = undefined 
               this.setState(this.state)
@@ -653,10 +676,11 @@ class App extends React.Component {
           </Toolbar>
         </AppBar>
         <Routes>
-          <Route path="/" element={<Home v={this.props.v}/>}/>
-          <Route path="/createCharityProject" element={<ManageCharityProject method="post"/>}/>
-          <Route path="/editCharityProject/:name" element={<ManageCharityProject v={this.props.v} method="put"/>}/>
-          <Route path="/charityProject/:name" element={<CharityProject v={this.props.v}/>}/>
+          <Route path="/" element={<Home archive={false}/>}/>
+          <Route path="/archive" element={<Home archive={true}/>}/>
+          <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
+          <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
+          <Route path="/charity-project/:name" element={<CharityProject/>}/>
           <Route path="/login" element={<Login onAuthenticated={(user) => {
             this.state.loggedInUser = user
             this.setState(this.state)
@@ -671,14 +695,13 @@ class App extends React.Component {
   }
 }
 
-axios.get('http://localhost:8743/charity-projects', {params: {page: 0}})
-  .then((charityProjects) => {
-    root.render(<App v={charityProjects.data}/>)
-  });
-
 const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />)
 
 //  TODO:
+//    implement charity-projects/:id
+//    
+//    Update search to be server-side to account for pagination
 //    Refactor Login, Register (and maybe EditUser) into UserManagement component
 //    sql Scan() error checking and variable assignment
 //    In the axios response handlers, have success/error popups
