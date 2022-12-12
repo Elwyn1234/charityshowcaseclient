@@ -1,0 +1,4 @@
+[submodule "charityshowcaseserver"]
+	path = charityshowcaseserver
+	url = https://github.com/Elwyn1234/charityshowcaseserver.git
+	branch = main
