@@ -26,12 +26,15 @@ class CharityProject extends React.Component {
     }
 
     let charityProjectName = window.location.pathname.split("/")[2]
-    axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`)
+    axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`, { withCredentials: true })
       .then((charityProject) => {
         this.state.loading = false
         this.state.charityProject = charityProject.data
         console.log(this.state)
         this.setState(this.state)
+      }).catch((err) => {
+        if (err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
       });
   }
 
@@ -62,7 +65,6 @@ class Register extends React.Component {
         value: "",
         error: false,
       },
-      authenticated: false
     }
   }
 
@@ -86,20 +88,13 @@ class Register extends React.Component {
     console.log("register: registerRequest: ", registerRequest)
     axios.post('http://localhost:8743/register', registerRequest)
       .then((response) => {
-        console.log("register Response handler: Request was successful!");
-        console.log(response)
-        if (response.status) {
-          this.props.onRegistered(user)
-          this.state.authenticated = true
-          this.setState(this.state)
-        }
+        window.location.href = "/login"
       });
   }
 
   render() {
     return (
       <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto", ...marginTop()}}>
-        {this.state.authenticated && (<Navigate to="/"/>)}
         <h2>Register</h2>
         <TextField
           label="Username"
@@ -162,7 +157,6 @@ class Login extends React.Component {
         value: "",
         error: false,
       },
-      authenticated: false,
     }
   }
 
@@ -177,19 +171,19 @@ class Login extends React.Component {
     }
 
     let user = {
-      name: this.state.username.value,
+      username: this.state.username.value,
       password: this.state.password.value,
     }
     const loginRequest = JSON.stringify(user)
 
     console.log("login: loginRequest", loginRequest)
-    axios.post('http://localhost:8743/login', loginRequest)
+    axios.post('http://localhost:8743/login', loginRequest, { withCredentials: true }) // withCredentials must be true so that the response header can hold cookies
       .then((response) => {
         console.log("login Response handler: Request was successful!");
-        if (true) {
-          this.props.onAuthenticated(response.data.user)
-          this.state.authenticated = true
-          this.setState(this.state)
+        console.log(response.data)
+        if (response.data.success) { // TODO: else
+          console.log(response.data)
+          window.location.href = "/"
         }
       });
   }
@@ -197,7 +191,6 @@ class Login extends React.Component {
   render() {
     return (
       <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto", ...marginTop()}}>
-        {this.state.authenticated && (<Navigate to="/"/>)}
         <h2>Login</h2>
         <TextField
           label="Username"
@@ -311,10 +304,10 @@ class ManageCharityProject extends React.Component {
     }
 
     let promises = []
-    promises.push(axios.get('http://localhost:8743/technologies'))
+    promises.push(axios.get('http://localhost:8743/technologies', { withCredentials: true }))
     if (this.props.method === "put") {
       let charityProjectName = window.location.pathname.split("/")[2]
-      promises.push(axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`))
+      promises.push(axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`, { withCredentials: true }))
     }
 
     Promise.all(promises)
@@ -336,6 +329,9 @@ class ManageCharityProject extends React.Component {
           })
         }
         this.setState(this.state)
+      }).catch((err) => {
+        if (err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
       });
   }
 
@@ -415,8 +411,19 @@ class ManageCharityProject extends React.Component {
             style={{...marginTop(), width: "max-content"}}
             onClick={this.createCharityProject}
           >
-            { this.props.method == "post" ? "Create" : "Update" }
+            { this.props.method === "post" ? "Create" : "Update" }
           </Button>
+
+          { this.props.method === "put" &&
+            <Button
+              variant="contained"
+              size='small'
+              style={{...marginTop(), width: "max-content"}}
+              // onClick={this.createCharityProject}
+            >
+              Archive
+            </Button>
+          }
         </FormGroup>
 
         <FormGroup style={{width: "20%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
@@ -500,7 +507,7 @@ class ManageCharityProject extends React.Component {
     const createCharityProjectRequest = JSON.stringify(charityProject)
 
     console.log("createCharityProject: createCharityProjectRequest", createCharityProjectRequest)
-    axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest})
+    axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest, withCredentials: true })
       .then(() => {
         console.log("createCharityProject Response handler: Request was successful!");
       });
@@ -518,7 +525,7 @@ class ManageCharityProject extends React.Component {
     const createTechnologyRequest = JSON.stringify(technology)
 
     console.log("createTechnology: createTechnologyRequest", createTechnologyRequest)
-    axios.post('http://localhost:8743/technologies', createTechnologyRequest)
+    axios.post('http://localhost:8743/technologies', createTechnologyRequest, { withCredentials: true })
       .then(() => {
         console.log("createTechnology Response handler: Request was successful!");
       });
@@ -595,12 +602,15 @@ class Home extends React.Component {
       loading: true,
     }
 
-    axios.get('http://localhost:8743/charity-projects/')
+    axios.get('http://localhost:8743/charity-projects/', { withCredentials: true })
       .then((charityProjects) => {
         this.state.loading = false
         this.state.charityProjects = charityProjects.data
         this.setState(this.state)
-      }).catch(() => { console.error("hi") });
+      }).catch((err) => { 
+        if (err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
+      });
   }
 
   render() {
@@ -667,11 +677,17 @@ class App extends React.Component {
             </div>
             <Button color='inherit' style={marginLeft()} href="/archive">Archive</Button>
             <Button color='inherit' style={marginLeft()} href="/user-management">User Management</Button>
-            <Button color='inherit' style={marginLeft()} href="/login" onClick={() => {
-              this.state.loggedInUser = undefined 
-              this.setState(this.state)
+            <Button color='inherit' style={marginLeft()} onClick={() => {
+              if (document.cookie.match("loggedIn=true")) {
+                // TODO: I think there is a more conventional method than post for login and logout
+                axios.post('http://localhost:8743/logout', null, { withCredentials: true }) // withCredentials must be true so that the response header can hold cookies
+                  .then(() => {
+                    window.location.href = "/login"
+                  });
+              }
+              window.location.href = "/login"
             }}>
-              {this.state.loggedInUser ? "Logout" : "Login"}
+              {document.cookie.match("loggedIn=true") ? "Logout" : "Login"}
             </Button>
           </Toolbar>
         </AppBar>
@@ -681,14 +697,8 @@ class App extends React.Component {
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
-          <Route path="/login" element={<Login onAuthenticated={(user) => {
-            this.state.loggedInUser = user
-            this.setState(this.state)
-          }}/>}/>
-          <Route path="/register" element={<Register onRegistered={(user) => {
-            this.state.loggedInUser = user
-            this.setState(this.state)
-          }}/>}/>
+          <Route path="/login" element={<Login/>}/>
+          <Route path="/register" element={<Register/>}/>
         </Routes>
       </BrowserRouter>
     )
