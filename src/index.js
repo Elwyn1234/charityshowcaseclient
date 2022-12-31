@@ -33,7 +33,7 @@ class CharityProject extends React.Component {
         console.log(this.state)
         this.setState(this.state)
       }).catch((err) => {
-        if (err.response.status === 401) // TODO: implement else
+        if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
       });
   }
@@ -324,13 +324,14 @@ class ManageCharityProject extends React.Component {
           this.state.charityProject.name.value = charityProject.Name
           this.state.charityProject.shortDescription.value = charityProject.ShortDescription
           this.state.charityProject.longDescription = charityProject.LongDescription
+          this.state.charityProject.archived = charityProject.Archived
           this.state.charityProject.technologies = charityProject.Technologies.map((technology) => {
             return { oldName: technology.Name, name: technology.Name, error: false }
           })
         }
         this.setState(this.state)
       }).catch((err) => {
-        if (err.response.status === 401) // TODO: implement else
+        if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
       });
   }
@@ -414,15 +415,16 @@ class ManageCharityProject extends React.Component {
             { this.props.method === "post" ? "Create" : "Update" }
           </Button>
 
-          { this.props.method === "put" &&
-            <Button
-              variant="contained"
-              size='small'
-              style={{...marginTop(), width: "max-content"}}
-              // onClick={this.createCharityProject}
-            >
-              Archive
-            </Button>
+          { 
+            // this.props.method === "put" &&
+            // <Button
+            //   variant="contained"
+            //   size='small'
+            //   style={{...marginTop(), width: "max-content"}}
+            //   // onClick={this.createCharityProject} // TODO: make work
+            // >
+            //   {this.state.charityProject.archived ? "Remove from Archive" : "Archive"}
+            // </Button>
           }
         </FormGroup>
 
@@ -510,7 +512,10 @@ class ManageCharityProject extends React.Component {
     axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest, withCredentials: true })
       .then(() => {
         console.log("createCharityProject Response handler: Request was successful!");
-      });
+      }).catch((err) => { 
+        if (err.response && err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
+      });;
   }
 
   createTechnology = () => { // TODO: image uploading is not implemented, currently the name is the only field used
@@ -528,7 +533,10 @@ class ManageCharityProject extends React.Component {
     axios.post('http://localhost:8743/technologies', createTechnologyRequest, { withCredentials: true })
       .then(() => {
         console.log("createTechnology Response handler: Request was successful!");
-      });
+      }).catch((err) => { 
+        if (err.response && err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
+      });;
   }
 
   handleTechnologySelectChange = (name, error, i) => {
@@ -544,7 +552,10 @@ class ManageCharityProject extends React.Component {
 class CharityProjectCard extends React.Component {
   render() {
     return (
-      <Card style={{width: this.props.width, cursor: "pointer"}} onClick={() => window.location.href=`/charity-project/${this.props.charityProject.Name}`}>
+      <Card style={{width: this.props.width, cursor: this.props.showLongDescription ? "auto" : "pointer"}} onClick={(e) => {
+        if (!this.props.showLongDescription)
+          window.location.href=`/charity-project/${this.props.charityProject.Name}`
+      }}>
         <CardContent>
           <Typography variant='h5'>{ this.props.charityProject.Name }</Typography>
         </CardContent>
@@ -588,7 +599,29 @@ class CharityProjectCard extends React.Component {
             <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
           </CardContent>
         }
-        </Card>
+        <CardContent >
+          <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
+          let charityProject = {
+            oldName: charityProjectName,
+            archived: this.props.charityProject.Archived ? false : true
+          } // TODO: rename oldName to name and rename name to newName
+          const updateCharityProjectRequest = JSON.stringify(charityProject)
+            axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
+              .then(() => {
+                this.props.removeMe()
+              }).catch((err) => { 
+                if (err.response && err.response.status === 401) {
+                  window.location.replace("/login")
+                  return
+                }// TODO: implement else
+                console.log(e)
+              });;
+            e.stopPropagation()
+          }}>
+            <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 }
@@ -602,13 +635,13 @@ class Home extends React.Component {
       loading: true,
     }
 
-    axios.get('http://localhost:8743/charity-projects/', { withCredentials: true })
+    axios.get('http://localhost:8743/charity-projects/?' + this.props.archive, { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
       .then((charityProjects) => {
         this.state.loading = false
         this.state.charityProjects = charityProjects.data
         this.setState(this.state)
       }).catch((err) => { 
-        if (err.response.status === 401) // TODO: implement else
+        if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
       });
   }
@@ -651,7 +684,16 @@ class Home extends React.Component {
               })
               return match
               */
-            }).map((charityProject, i) => <CharityProjectCard charityProject={charityProject} key={i} width={"32%"} showLongDescription={false}/>)
+            }).map((charityProject, i) =>
+              <CharityProjectCard
+                charityProject={charityProject}
+                key={i}
+                width={"32%"}
+                showLongDescription={false}
+                removeMe={() => {
+                  this.state.charityProjects = this.state.charityProjects.filter((val, nestedIndex) => nestedIndex !== i);
+                  this.setState(this.state) }}
+              />)
           }
         </Stack>
         <Button href="/create-charity-project" variant="contained" style={marginTop()}>
@@ -692,8 +734,8 @@ class App extends React.Component {
           </Toolbar>
         </AppBar>
         <Routes>
-          <Route path="/" element={<Home archive={false}/>}/>
-          <Route path="/archive" element={<Home archive={true}/>}/>
+          <Route path="/" element={<Home archive="notArchived"/>}/>
+          <Route path="/archive" element={<Home archive="archived"/>}/>
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
@@ -709,75 +751,157 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />)
 
 //  TODO:
-//    implement charity-projects/:id
-//    
-//    Update search to be server-side to account for pagination
-//    Refactor Login, Register (and maybe EditUser) into UserManagement component
+//  REQUIRED
+//    View Charities and Filters/search functions
+//      for now, can we just download the entire list of charity projects?
+//    Auth and Users
+//      Roles: creators can add and archive charity projects whilst editors can edit items (maybe this will be revised after my assignment)
+//      Each user should have an associated email
+//      Creator/admin page: authorised users can assign other users the editor/creator roles
+//    Add/Edit/Delete Items (Creators)
+//      Remember that some of these details could simply be added to the description section instead of having a dedicated field for each detail
+//      for now, the below can just be strings if time is short. Eventually we want them to be optionally or mandatorally linked to a database entry for location, charity, or person/user.
+//      how is validation for all user entrypoints
+//      For each detail, update the existing flow (form, endpoints, database) to account for each field
+//        People who worked on the project (optionally linked to a user account)
+//        The location of the project (for now, probably just a string, not a selection/drop-down)
+//        The name of the charity and maybe email
+//        Project contact (such as email or homepage (eg. github))
+//    CSV Reports
+//      Query charity-projects and generate a csv from this
+//      project name and/or id
+//      short description
+//      long description
+//      charity
+//      charity email
+//      accenture/project contact email
+//      list of technologies
+//      list of people
+//      location
+//    Archive
+//
+//    Add test data
+//    A DEMONSTRATION OF THE PROJECT
+
+//  SHOULD HAVE
+//    BEFORE TAKING THIS TOO FAR, ASK FOR REQUIREMENTS
+//    View Charities and Filters/search functions
+//      Make Charity List look better
+//      Select fields to search such as technology or location
+//      Update search to be server-side to account for pagination (this is only a concern for large datasets that are actually paginated)
+//    Auth and Users
+//      Roles: creators can add items whilst editors can edit items (maybe this will be revised after my assignment)
+//      Refactor Login, Register (and maybe EditUser) into UserManagement component (only if it speeds up development)
+//    Add/Edit/Delete Items
+//      Before taking this too far, ask for requirements
+//      We want an endpoint for each of the resources and for each endpoint, we want a GET, POST, AND PUT method. For some endpoints, we want a DELETE method whilst for others, we want a PUT method that archives the endpoint.
+//        Create a document defining the endpoints (http methods for each), and the database tables that we want to maintain.
+//      IMPORTANT: Add/edit charities and select a charity (or charities) when creating charity projects etc
+//        name
+//        description
+//        email
+//        location
+//      Technologies
+//      Locations
+//    CSV Reports
+//      Define filters and sorts before generating a report
+//    Archive
+//
+//    Maybe setup the database in scripts folder and call it from install.sh or whatever my script will be called
+//    responsive (mobile friendly)
+
+//  NICE TO HAVE
+//    View Charities and Filters/search functions
+//      sort options
+//    Auth and Users
+//      server: hash passwords
+//    Add/Edit/Delete Items
+//      Feedback on successful creation/update
+//      Feedback on failed creation/update
+//      Images as part of the description (support markup?) or as their own field
+//      Users? or allow creators to edit/remove account details / accounts
+//      Allow creators to delete or archive items
+//      Move technology creation into its own webpage?!
+//    CSV Reports
+//      other formats like json
+//    Archive
+//
+//    close sql connections
+//    Lets keep the API callable from anyone (even via a curl request), therefore we must have server side validation as well as client side (how to handle duplicated validation across multiple programs)
+//    Don't use the default go logger
+//    Maybe we should change getCharityProjects function to not return technologies as well. What does gitlab do for pipelines
+//      charity-projects/:name/technologies
+//    Abstract update, create, and delete technologies into one function (was this todo for the server or client?)
+//    Use transactions for sql queries
+//    Get SQL passwords for root and "ejoh" from a file or other more secure location
 //    sql Scan() error checking and variable assignment
 //    In the axios response handlers, have success/error popups
-//    When two of the same technology are selected and are displayed as errors, both should be given error=false if one is changed
 //    Apply length validation based on table rules
 //    Put aside the file uploading for now as it may be hard
 //    Display something even if the Go server is down
 //    Consider how feasible it is to use SVGs
-//    Make Charity List look nice
 //    Add tooltip on icon hover
 //    error handling
-// 
-//  DONE:
-//    Use a default icon if the path string is empty
-//    Add Filters/search functions
+
+
+
+//DONE:
+//  REQUIRED
+//    View Charities and Filters/search functions
+//      Use a default icon if the image path string is empty, otherwise, display the image provided for each technology
+//      For each charity project fetch the relevant information from the database via the Go server
+//    Auth and Users
+//      Registration page
+//        server: Create User table
+//        server: Query for registration
+//      Generate keypair
+//      Add a login endpoint that will generate a JWT using the keypair
+//      make client store the token
+//      make client pass the token in for all requests
+//      make the server validate each request
+//      Add a logout endpoint that will clear the client's JWT cookie
+//      Redirect to login if not logged in
+//    Add/Edit/Delete Items
+//      Client validation (charity project):
+//        the same technology cannot be selected twice
+//        at least three technologies must be selected
+//        name must not be empty
+//        short description must not be empty
+//      Client validation (technology):
+//        name must not be null or an empty string
+//      Editors and Creators can update or add new charity projects respectively
+//        endpoint that writes to database
+//      Creators can add new technologies
+//        endpoint that writes to database
+//      implement charity-projects/:id
+//      Request technology list from server and display it in a drop down in the create charity page
+//    Reports
+//    Archive
+//      Update the existing charity-projects/ PUT endpoint to only update the parameters provided so that we can call it with the charity project's name and archived=true
+//      Make the edit charity webpage's archive button call the endpoint and add an archive button to each charity project displayed on the home page
+//      Make the getcharities endpoint return archived or non-archived items or both 
+//      Add front end for displaying a list of archived charities
+//      Display an unarchive button for archived items
+//      Make React update the charity project list when items are archived/unarchived
+
+//    Navbar with tabs for Home, Archive, Login/Logout, and User Management
 //    Write drop database script
 //    Create tables as root user. Only give the Go server the limited priveliges that it needs
-//    source title and description from server database 
+
+
+//  SHOULD HAVE
+//    View Charities and Filters/search functions
+//    Auth and Users
+//    Add/Edit/Delete Items
+//    CSV Reports
+//    Archive
+
+//  NICE TO HAVE
+//    View Charities and Filters/search functions
+//    Auth and Users
+//    Add/Edit/Delete Items
+//    CSV Reports
+//    Archive
+//
 //    Script to change the width and height of an SVG
-//
-//  createTechnology:
-//  TODO:
-//    add feedback on successful creation
-//    close sql connections
-//    image uploading not handled
-//  DONE:
-//    server writes to database when it receives a request
-//  Client side name validation:
-//    name must not be null or an empty string
-//
-//  Home:
-//  TODO:
-//  DONE:
-//    Get charity projects from database
-//
-//  CreateCharityProject:
-//  TODO:
-//    Move technology creation into its own webpage?!
-//  DONE:
-//    Request technology list from server
-//    Server handles request and writes to relevant databases
-//    validation:
-//      the same technology cannot be selected twice
-//      at least three technologies must be selected
-//      name must not be empty
-//      short description must not be empty
-// 
-//  Login:
-//  TODO:
-//    lets not return the passwords on a successful request
-//    server: hash passwords
-//    Creator admin page: authorised users can assign other users the editor/creator roles
-//    Redirect to login if not logged in
-//    Use a token for this? for now, just do client side authorisation which is insecure but we can change that later
-//    Users should have a role
-//      User: Readonly
-//      Editors: Update operations
-//      Creators: Create items
-//  DONE:
-//    Registration page
-//      server: Create User table
-//      server: Query for registration
-//    Login page
-//      server: Query for authentication
-//
-//  Navbar/Appbar:
-//  TODO:
-//    Should have tab for Home, Archive, Login/Logout, and User Management
-//  DONE:
+
