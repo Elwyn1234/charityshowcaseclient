@@ -33,7 +33,7 @@ class CharityProject extends React.Component {
         console.log(this.state)
         this.setState(this.state)
       }).catch((err) => {
-        if (err.response.status === 401) // TODO: implement else
+        if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
       });
   }
@@ -324,13 +324,14 @@ class ManageCharityProject extends React.Component {
           this.state.charityProject.name.value = charityProject.Name
           this.state.charityProject.shortDescription.value = charityProject.ShortDescription
           this.state.charityProject.longDescription = charityProject.LongDescription
+          this.state.charityProject.archived = charityProject.Archived
           this.state.charityProject.technologies = charityProject.Technologies.map((technology) => {
             return { oldName: technology.Name, name: technology.Name, error: false }
           })
         }
         this.setState(this.state)
       }).catch((err) => {
-        if (err.response.status === 401) // TODO: implement else
+        if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
       });
   }
@@ -414,15 +415,16 @@ class ManageCharityProject extends React.Component {
             { this.props.method === "post" ? "Create" : "Update" }
           </Button>
 
-          { this.props.method === "put" &&
-            <Button
-              variant="contained"
-              size='small'
-              style={{...marginTop(), width: "max-content"}}
-              // onClick={this.createCharityProject}
-            >
-              Archive
-            </Button>
+          { 
+            // this.props.method === "put" &&
+            // <Button
+            //   variant="contained"
+            //   size='small'
+            //   style={{...marginTop(), width: "max-content"}}
+            //   // onClick={this.createCharityProject} // TODO: make work
+            // >
+            //   {this.state.charityProject.archived ? "Remove from Archive" : "Archive"}
+            // </Button>
           }
         </FormGroup>
 
@@ -510,7 +512,10 @@ class ManageCharityProject extends React.Component {
     axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest, withCredentials: true })
       .then(() => {
         console.log("createCharityProject Response handler: Request was successful!");
-      });
+      }).catch((err) => { 
+        if (err.response && err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
+      });;
   }
 
   createTechnology = () => { // TODO: image uploading is not implemented, currently the name is the only field used
@@ -528,7 +533,10 @@ class ManageCharityProject extends React.Component {
     axios.post('http://localhost:8743/technologies', createTechnologyRequest, { withCredentials: true })
       .then(() => {
         console.log("createTechnology Response handler: Request was successful!");
-      });
+      }).catch((err) => { 
+        if (err.response && err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
+      });;
   }
 
   handleTechnologySelectChange = (name, error, i) => {
@@ -544,7 +552,10 @@ class ManageCharityProject extends React.Component {
 class CharityProjectCard extends React.Component {
   render() {
     return (
-      <Card style={{width: this.props.width, cursor: "pointer"}} onClick={() => window.location.href=`/charity-project/${this.props.charityProject.Name}`}>
+      <Card style={{width: this.props.width, cursor: this.props.showLongDescription ? "auto" : "pointer"}} onClick={(e) => {
+        if (!this.props.showLongDescription)
+          window.location.href=`/charity-project/${this.props.charityProject.Name}`
+      }}>
         <CardContent>
           <Typography variant='h5'>{ this.props.charityProject.Name }</Typography>
         </CardContent>
@@ -588,7 +599,29 @@ class CharityProjectCard extends React.Component {
             <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
           </CardContent>
         }
-        </Card>
+        <CardContent >
+          <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
+          let charityProject = {
+            oldName: charityProjectName,
+            archived: this.props.charityProject.Archived ? false : true
+          } // TODO: rename oldName to name and rename name to newName
+          const updateCharityProjectRequest = JSON.stringify(charityProject)
+            axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
+              .then(() => {
+                this.props.removeMe()
+              }).catch((err) => { 
+                if (err.response && err.response.status === 401) {
+                  window.location.replace("/login")
+                  return
+                }// TODO: implement else
+                console.log(e)
+              });;
+            e.stopPropagation()
+          }}>
+            <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 }
@@ -602,13 +635,13 @@ class Home extends React.Component {
       loading: true,
     }
 
-    axios.get('http://localhost:8743/charity-projects/', { withCredentials: true })
+    axios.get('http://localhost:8743/charity-projects/?' + this.props.archive, { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
       .then((charityProjects) => {
         this.state.loading = false
         this.state.charityProjects = charityProjects.data
         this.setState(this.state)
       }).catch((err) => { 
-        if (err.response.status === 401) // TODO: implement else
+        if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
       });
   }
@@ -651,7 +684,16 @@ class Home extends React.Component {
               })
               return match
               */
-            }).map((charityProject, i) => <CharityProjectCard charityProject={charityProject} key={i} width={"32%"} showLongDescription={false}/>)
+            }).map((charityProject, i) =>
+              <CharityProjectCard
+                charityProject={charityProject}
+                key={i}
+                width={"32%"}
+                showLongDescription={false}
+                removeMe={() => {
+                  this.state.charityProjects = this.state.charityProjects.filter((val, nestedIndex) => nestedIndex !== i);
+                  this.setState(this.state) }}
+              />)
           }
         </Stack>
         <Button href="/create-charity-project" variant="contained" style={marginTop()}>
@@ -692,8 +734,8 @@ class App extends React.Component {
           </Toolbar>
         </AppBar>
         <Routes>
-          <Route path="/" element={<Home archive={false}/>}/>
-          <Route path="/archive" element={<Home archive={true}/>}/>
+          <Route path="/" element={<Home archive="notArchived"/>}/>
+          <Route path="/archive" element={<Home archive="archived"/>}/>
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
@@ -737,11 +779,8 @@ root.render(<App />)
 //      list of people
 //      location
 //    Archive
-//      Add a post endpoint: charity-projects/:name/archive
-//      Make the getcharities endpoint return archived or non-archived items or both 
-//      Make the edit charity webpage's archive button call the endpoint
-//      Add front end for displaying a list of archived charities
 //
+//    Add test data
 //    A DEMONSTRATION OF THE PROJECT
 
 //  SHOULD HAVE
@@ -838,6 +877,12 @@ root.render(<App />)
 //      Request technology list from server and display it in a drop down in the create charity page
 //    Reports
 //    Archive
+//      Update the existing charity-projects/ PUT endpoint to only update the parameters provided so that we can call it with the charity project's name and archived=true
+//      Make the edit charity webpage's archive button call the endpoint and add an archive button to each charity project displayed on the home page
+//      Make the getcharities endpoint return archived or non-archived items or both 
+//      Add front end for displaying a list of archived charities
+//      Display an unarchive button for archived items
+//      Make React update the charity project list when items are archived/unarchived
 
 //    Navbar with tabs for Home, Archive, Login/Logout, and User Management
 //    Write drop database script
