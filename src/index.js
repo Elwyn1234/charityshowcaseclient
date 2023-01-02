@@ -17,6 +17,92 @@ const fontSize = () => ({
     fontSize: "0.5rem"
 })
 
+class UserManagement extends React.Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      loading: true,
+    }
+
+    axios.get('http://localhost:8743/users/', { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
+      .then((users) => {
+        this.state.loading = false
+        this.state.users = users.data.map((user) => {
+          user.Role = stringToRole(user.Role)
+          return user
+        })
+        this.setState(this.state)
+      }).catch((err) => { 
+        if (err.response && err.response.status === 401) // TODO: implement else
+          window.location.replace("/login")
+      });
+  }
+
+  render() {
+    if (this.state.loading)
+      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
+
+    return (
+      <div style={{display: "flex", flexDirection: "column", minWidth: "max-content", width: "50%", margin: "auto", ...marginTop()}}>
+        {
+          this.state.users.map((user, i) =>
+            <Card style={{...marginTop(), display: "flex", gap: "3rem", padding: "1rem"}} variant="outlined" key={i}>
+              <CardContent style={{flexGrow: 1, margin: "auto", padding: 0}}>
+                <Typography>{ user.Username }</Typography>
+              </CardContent>
+              <div style={{margin: "auto"}}>
+                <FormControl size="small">
+                  <InputLabel id="user-select-label">Role</InputLabel>
+                  <Select
+                    labelId='user-select-label'
+                    label={`Role`}
+                    value={user.Role}
+                    required
+                    onChange={(e) => {
+                      if (e.target.value !== null && e.target.value !== '') { // TODO: is this condition redundant
+                        this.state.users[i].Role = e.target.value
+                        this.setState(this.state)
+                        // TODO: do we need to setState here
+                      }
+                    }}
+                  >
+                    <MenuItem value={Roles.User} dense={true} key={0}>User</MenuItem>
+                    <MenuItem value={Roles.Editor} dense={true} key={1}>Editor</MenuItem>
+                    <MenuItem value={Roles.Creator} dense={true} key={2}>Creator</MenuItem>
+                    <MenuItem value={Roles.Admin} dense={true} key={3}>Admin</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <Button
+                onClick={(e) => {
+                  let jsonUser = JSON.stringify({
+                    username: user.Username,
+                    role: roleToString(this.state.users[i].Role)
+                  })
+                  console.log(e.target.value)
+                  console.log(jsonUser)
+                  axios.put('http://localhost:8743/users/', jsonUser, { withCredentials: true })
+                    .then((users) => {
+                      console.log(`successfully updated ${user.Username}'s role to ${e.target.value}.`)
+                    }).catch((err) => { 
+                      if (err.response && err.response.status === 401) // TODO: implement else
+                        window.location.replace("/login")
+                    });
+                }}
+                variant="contained"
+                size='small'
+                style={{height: "2.5rem", width: "max-content", margin: "auto"}}
+              >
+                Save
+              </Button>
+            </Card>
+        )}
+      </div>
+    );
+  }
+}
+
 class CharityProject extends React.Component {
   constructor(props) {
     super(props)
@@ -44,10 +130,12 @@ class CharityProject extends React.Component {
 
     return (
       <div style={{width: "85%", margin: "auto", ...marginTop()}}>
-        <CharityProjectCard charityProject={this.state.charityProject} width={"100%"} showLongDescription={true}/>
-        <Button href={`/edit-charity-project/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
-          <Typography variant='body1'>Edit</Typography>
-        </Button>
+        <CharityProjectCard charityProject={this.state.charityProject} width={"80%"} showLongDescription={true}/>
+        { userRole >= Roles.Editor && 
+          <Button href={`/edit-charity-project/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
+            <Typography variant='body1'>Edit</Typography>
+          </Button>
+        }
       </div>
     );
   }
@@ -551,15 +639,15 @@ class ManageCharityProject extends React.Component {
 
 class CharityProjectCard extends React.Component {
   render() {
-    return (
-      <Card style={{width: this.props.width, cursor: this.props.showLongDescription ? "auto" : "pointer"}} onClick={(e) => {
+    return ( // Styling has to be applied here on the Card instead of on the CharityProjectCard
+      <Card style={{minWidth: this.props.width, maxWidth: this.props.width, cursor: "pointer", margin: this.props.showLongDescription ? "auto" : "0", ...marginTop(), display: "flex", flexDirection: "column"}} variant="outlined" onClick={(e) => {
         if (!this.props.showLongDescription)
           window.location.href=`/charity-project/${this.props.charityProject.Name}`
       }}>
         <CardContent>
           <Typography variant='h5'>{ this.props.charityProject.Name }</Typography>
         </CardContent>
-        <CardContent >
+        <CardContent style={{flexGrow: 1}}>
           <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
         </CardContent>
         <CardContent style={{margin: "auto", width: "max-content"}}>
@@ -596,31 +684,34 @@ class CharityProjectCard extends React.Component {
         </CardContent>
         { this.props.showLongDescription && 
           <CardContent >
-            <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
+            <Typography variant='body1'>{ this.props.charityProject.LongDescription }</Typography>
           </CardContent>
         }
+          { userRole >= Roles.Creator &&
         <CardContent >
-          <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
-          let charityProject = {
-            oldName: charityProjectName,
-            archived: this.props.charityProject.Archived ? false : true
-          } // TODO: rename oldName to name and rename name to newName
-          const updateCharityProjectRequest = JSON.stringify(charityProject)
-            axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
-              .then(() => {
-                this.props.removeMe()
-              }).catch((err) => { 
-                if (err.response && err.response.status === 401) {
-                  window.location.replace("/login")
-                  return
-                }// TODO: implement else
-                console.log(e)
-              });;
-            e.stopPropagation()
-          }}>
-            <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
-          </Button>
+            <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
+            let charityProject = {
+              oldName: charityProjectName,
+              archived: this.props.charityProject.Archived ? false : true
+            } // TODO: rename oldName to name and rename name to newName
+            const updateCharityProjectRequest = JSON.stringify(charityProject)
+              axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
+                .then(() => {
+                  if (this.props.removeMe)
+                    this.props.removeMe()
+                }).catch((err) => { 
+                  if (err.response && err.response.status === 401) {
+                    window.location.replace("/login")
+                    return
+                  }// TODO: implement else
+                  console.log(e)
+                });;
+              e.stopPropagation()
+            }}>
+              <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
+            </Button>
         </CardContent>
+          }
       </Card>
     );
   }
@@ -651,7 +742,7 @@ class Home extends React.Component {
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
     return (
-      <div style={{width: "85%", margin: "auto", ...marginTop()}}>
+      <div style={{width: "90%", margin: "auto", ...marginTop()}}>
         <TextField
           label="Name"
           style={marginTop()}
@@ -661,7 +752,7 @@ class Home extends React.Component {
             this.setState(this.state)
           }}
         />
-        <Stack direction="row" spacing={"2%"} justifyContent="center" style={marginTop()}>
+        <div style={{display: "flex", flexWrap: "wrap", gap: "2%", ...marginTop()}}>
           {
             this.state.charityProjects.filter((value) => {
               console.log(this.state.filter)
@@ -688,17 +779,19 @@ class Home extends React.Component {
               <CharityProjectCard
                 charityProject={charityProject}
                 key={i}
-                width={"32%"}
+                width={"19rem"}
                 showLongDescription={false}
                 removeMe={() => {
                   this.state.charityProjects = this.state.charityProjects.filter((val, nestedIndex) => nestedIndex !== i);
                   this.setState(this.state) }}
               />)
           }
-        </Stack>
-        <Button href="/create-charity-project" variant="contained" style={marginTop()}>
-          <Typography variant='body1'>New Charity Project</Typography>
-        </Button>
+        </div>
+        { userRole >= Roles.Creator &&
+          <Button href="/create-charity-project" variant="contained" style={marginTop()}>
+            <Typography variant='body1'>New Charity Project</Typography>
+          </Button>
+        }
       </div>
     );
   }
@@ -717,8 +810,8 @@ class App extends React.Component {
             <div style={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             <Typography variant='h5' style={{cursor: "pointer", width: "max-content"}} onClick={() => window.location.href="/"}>Charity Showcase</Typography>
             </div>
-            <Button color='inherit' style={marginLeft()} href="/archive">Archive</Button>
-            <Button color='inherit' style={marginLeft()} href="/user-management">User Management</Button>
+            {userRole >= Roles.Creator && <Button color='inherit' style={marginLeft()} href="/archive">Archive</Button>}
+            {userRole >= Roles.Admin && <Button color='inherit' style={marginLeft()} href="/user-management">User Management</Button>}
             <Button color='inherit' style={marginLeft()} onClick={() => {
               if (document.cookie.match("loggedIn=true")) {
                 // TODO: I think there is a more conventional method than post for login and logout
@@ -739,6 +832,7 @@ class App extends React.Component {
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
+          <Route path="/user-management" element={<UserManagement/>}/>
           <Route path="/login" element={<Login/>}/>
           <Route path="/register" element={<Register/>}/>
         </Routes>
@@ -747,21 +841,41 @@ class App extends React.Component {
   }
 }
 
+const Roles = {
+  User: 0,
+  Editor: 1,
+  Creator: 2,
+  Admin: 3,
+}
+function stringToRole(string) {
+  switch(string.toLowerCase()) {
+    case "user": return Roles.User;
+    case "editor": return Roles.Editor;
+    case "creator": return Roles.Creator;
+    case "admin": return Roles.Admin;
+  }
+}
+function roleToString(role) {
+  switch(role) {
+    case Roles.User: return "user";
+    case Roles.Editor: return "editor";
+    case Roles.Creator: return "creator";
+    case Roles.Admin: return "admin";
+  }
+}
+
+let userRole = stringToRole(document.cookie.match(/role=(.*),*/)?.at(1))
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />)
 
 //  TODO:
 //  REQUIRED
 //    View Charities and Filters/search functions
-//      for now, can we just download the entire list of charity projects?
 //    Auth and Users
-//      Roles: creators can add and archive charity projects whilst editors can edit items (maybe this will be revised after my assignment)
-//      Each user should have an associated email
-//      Creator/admin page: authorised users can assign other users the editor/creator roles
 //    Add/Edit/Delete Items (Creators)
 //      Remember that some of these details could simply be added to the description section instead of having a dedicated field for each detail
 //      for now, the below can just be strings if time is short. Eventually we want them to be optionally or mandatorally linked to a database entry for location, charity, or person/user.
-//      how is validation for all user entrypoints
 //      For each detail, update the existing flow (form, endpoints, database) to account for each field
 //        People who worked on the project (optionally linked to a user account)
 //        The location of the project (for now, probably just a string, not a selection/drop-down)
@@ -780,19 +894,23 @@ root.render(<App />)
 //      location
 //    Archive
 //
+//    Simple install.py script for setting an admin user, and setting up the db
 //    Add test data
 //    A DEMONSTRATION OF THE PROJECT
 
 //  SHOULD HAVE
 //    BEFORE TAKING THIS TOO FAR, ASK FOR REQUIREMENTS
 //    View Charities and Filters/search functions
-//      Make Charity List look better
-//      Select fields to search such as technology or location
-//      Update search to be server-side to account for pagination (this is only a concern for large datasets that are actually paginated)
+//      Review the Charity List's appearance
+//      Select fields to filter by such as technology or location
+//      Add pagination if the number of charity projects is going to be large
+//        Update search to be server-side to account for pagination (this is only a concern for large datasets that are actually paginated)
 //    Auth and Users
+//      Each user should have an associated email
 //      Roles: creators can add items whilst editors can edit items (maybe this will be revised after my assignment)
 //      Refactor Login, Register (and maybe EditUser) into UserManagement component (only if it speeds up development)
 //    Add/Edit/Delete Items
+//      how is validation for all user entrypoints
 //      Before taking this too far, ask for requirements
 //      We want an endpoint for each of the resources and for each endpoint, we want a GET, POST, AND PUT method. For some endpoints, we want a DELETE method whilst for others, we want a PUT method that archives the endpoint.
 //        Create a document defining the endpoints (http methods for each), and the database tables that we want to maintain.
@@ -807,7 +925,6 @@ root.render(<App />)
 //      Define filters and sorts before generating a report
 //    Archive
 //
-//    Maybe setup the database in scripts folder and call it from install.sh or whatever my script will be called
 //    responsive (mobile friendly)
 
 //  NICE TO HAVE
@@ -815,6 +932,7 @@ root.render(<App />)
 //      sort options
 //    Auth and Users
 //      server: hash passwords
+//      server side role checking to prevent privelige escelation
 //    Add/Edit/Delete Items
 //      Feedback on successful creation/update
 //      Feedback on failed creation/update
@@ -826,6 +944,7 @@ root.render(<App />)
 //      other formats like json
 //    Archive
 //
+//    Responsive website
 //    close sql connections
 //    Lets keep the API callable from anyone (even via a curl request), therefore we must have server side validation as well as client side (how to handle duplicated validation across multiple programs)
 //    Don't use the default go logger
@@ -848,9 +967,13 @@ root.render(<App />)
 //DONE:
 //  REQUIRED
 //    View Charities and Filters/search functions
+//      Make Charity List look better
+//      Wrap charity project cards, three per row
 //      Use a default icon if the image path string is empty, otherwise, display the image provided for each technology
 //      For each charity project fetch the relevant information from the database via the Go server
 //    Auth and Users
+//      Roles: creators can add and archive charity projects whilst editors can edit items (maybe this will be revised after my assignment)
+//      Creator/admin page: authorised users can assign other users the editor/creator roles
 //      Registration page
 //        server: Create User table
 //        server: Query for registration
