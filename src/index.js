@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import Card from '@mui/material/Card';
+import PlaceIcon from '@mui/icons-material/Place';
+import LocationOn from '@mui/icons-material/LocationOn';
 import {AppBar, Box, Button, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Toolbar, Tooltip, Typography} from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
@@ -383,6 +385,16 @@ class ManageCharityProject extends React.Component {
           error: false,
         },
         longDescription: '',
+        charityName: '',
+        charityEmail: '',
+        projectEmail: {
+          value: '',
+          error: false,
+        },
+        location: {
+          value: '',
+          error: false,
+        },
         technologies: [],
       },
       technologies: null, // a list of all technologies from which the user can select from
@@ -412,6 +424,10 @@ class ManageCharityProject extends React.Component {
           this.state.charityProject.name.value = charityProject.Name
           this.state.charityProject.shortDescription.value = charityProject.ShortDescription
           this.state.charityProject.longDescription = charityProject.LongDescription
+          this.state.charityProject.charityName = charityProject.CharityName
+          this.state.charityProject.charityEmail = charityProject.CharityEmail
+          this.state.charityProject.projectEmail.value = charityProject.ProjectEmail
+          this.state.charityProject.location.value = charityProject.Location
           this.state.charityProject.archived = charityProject.Archived
           this.state.charityProject.technologies = charityProject.Technologies.map((technology) => {
             return { oldName: technology.Name, name: technology.Name, error: false }
@@ -475,6 +491,56 @@ class ManageCharityProject extends React.Component {
             value={this.state.charityProject.longDescription}
             onChange={(e) => {
               this.state.charityProject.longDescription = e.target.value
+              this.setState(this.state)
+            }}
+          />
+          <TextField
+            label="Charity Name"
+            style={marginTop()}
+            size="small"
+            value={this.state.charityProject.charityName}
+            onChange={(e) => {
+              this.state.charityProject.charityName = e.target.value
+              this.setState(this.state)
+            }}
+          />
+          <TextField
+            label="Charity Email"
+            style={marginTop()}
+            size="small"
+            value={this.state.charityProject.charityEmail}
+            onChange={(e) => {
+              this.state.charityProject.charityEmail = e.target.value
+              this.setState(this.state)
+            }}
+          />
+          <TextField
+            label="Project Email"
+            style={marginTop()}
+            size="small"
+            required
+            value={this.state.charityProject.projectEmail.value}
+            error={this.state.charityProject.projectEmail.error}
+            onChange={(e) => {
+              if (e.target.value !== null && e.target.value !== '') {
+                this.state.charityProject.projectEmail.error = false
+              }
+              this.state.charityProject.projectEmail.value = e.target.value
+              this.setState(this.state)
+            }}
+          />
+          <TextField
+            label="Location"
+            style={marginTop()}
+            size="small"
+            required
+            value={this.state.charityProject.location.value}
+            error={this.state.charityProject.location.error}
+            onChange={(e) => {
+              if (e.target.value !== null && e.target.value !== '') {
+                this.state.charityProject.location.error = false
+              }
+              this.state.charityProject.location.value = e.target.value
               this.setState(this.state)
             }}
           />
@@ -565,6 +631,14 @@ class ManageCharityProject extends React.Component {
       this.state.charityProject.shortDescription.error = true
       valid = false
     }
+    if (this.state.charityProject.projectEmail.value === null || this.state.charityProject.projectEmail.value === "") {
+      this.state.charityProject.projectEmail.error = true
+      valid = false
+    }
+    if (this.state.charityProject.location.value === null || this.state.charityProject.location.value === "") {
+      this.state.charityProject.location.error = true
+      valid = false
+    }
     this.state.charityProject.technologies.forEach((technology, i) => {
       if (technology.name === null || technology.name === '') {
         technology.error = true
@@ -589,6 +663,10 @@ class ManageCharityProject extends React.Component {
       name: this.state.charityProject.name.value,
       shortDescription: this.state.charityProject.shortDescription.value,
       longDescription: this.state.charityProject.longDescription,
+      charityName: this.state.charityProject.charityName,
+      charityEmail: this.state.charityProject.charityEmail,
+      projectEmail: this.state.charityProject.projectEmail.value,
+      location: this.state.charityProject.location.value,
       technologies: []
     }
     this.state.charityProject.technologies.forEach((technology) => {
@@ -644,12 +722,43 @@ class CharityProjectCard extends React.Component {
         if (!this.props.showLongDescription)
           window.location.href=`/charity-project/${this.props.charityProject.Name}`
       }}>
+
         <CardContent>
           <Typography variant='h5'>{ this.props.charityProject.Name }</Typography>
         </CardContent>
         <CardContent style={{flexGrow: 1}}>
           <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
         </CardContent>
+
+        { this.props.showLongDescription && 
+          <CardContent style={{flexGrow: 1}}>
+            { this.props.charityProject.Location &&
+              <div style={{display: "flex"}}>
+                <PlaceIcon />
+                <Typography variant='body1'>{ this.props.charityProject.Location }</Typography>
+              </div>
+            }
+            { this.props.charityProject.CharityName &&
+              <div>
+                <p style={{marginBottom: 0}}>Charity Name</p>
+                <Typography variant='body1'>{ this.props.charityProject.CharityName }</Typography>
+              </div>
+            }
+            { this.props.charityProject.CharityEmail &&
+              <div>
+                <p style={{marginBottom: 0}}>Charity Email</p>
+                <Typography variant='body1'>{ this.props.charityProject.CharityEmail }</Typography>
+              </div>
+            }
+            { this.props.charityProject.ProjectEmail &&
+              <div>
+                <p style={{marginBottom: 0}}>Project Email</p>
+                <Typography variant='body1'>{ this.props.charityProject.ProjectEmail }</Typography>
+              </div>
+            }
+          </CardContent>
+        }
+
         <CardContent style={{margin: "auto", width: "max-content"}}>
           <Tooltip title={this.props.charityProject.Technologies[0].Name}>
             <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[0].Name}>
@@ -674,7 +783,7 @@ class CharityProjectCard extends React.Component {
           <Tooltip title={this.props.charityProject.Technologies[2].Name}>
             <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[2].Name}>
               <img 
-                src={this.props.charityProject.Technologies[2].SVG !== '' ? this.props.charityProject.Technologies[2].SVG : "/assets/icons/default-technology-icon.svg"}
+                src={this.props.charityProject.Technologies[2].SVG !== '' ? this.props.charityProject.Technologies[2].SVG : "/assets/icons/icons8-react.svg"}
                 alt={this.props.charityProject.Technologies[2].Name}
                 width="50"
                 height="50"
@@ -689,27 +798,27 @@ class CharityProjectCard extends React.Component {
         }
           { userRole >= Roles.Creator &&
         <CardContent >
-            <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
-            let charityProject = {
-              oldName: charityProjectName,
-              archived: this.props.charityProject.Archived ? false : true
-            } // TODO: rename oldName to name and rename name to newName
-            const updateCharityProjectRequest = JSON.stringify(charityProject)
-              axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
-                .then(() => {
-                  if (this.props.removeMe)
-                    this.props.removeMe()
-                }).catch((err) => { 
-                  if (err.response && err.response.status === 401) {
-                    window.location.replace("/login")
-                    return
-                  }// TODO: implement else
-                  console.log(e)
-                });;
-              e.stopPropagation()
-            }}>
-              <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
-            </Button>
+          <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
+          let charityProject = {
+            oldName: charityProjectName,
+            archived: this.props.charityProject.Archived ? false : true
+          } // TODO: rename oldName to name and rename name to newName
+          const updateCharityProjectRequest = JSON.stringify(charityProject)
+            axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
+              .then(() => {
+                if (this.props.removeMe)
+                  this.props.removeMe()
+              }).catch((err) => { 
+                if (err.response && err.response.status === 401) {
+                  window.location.replace("/login")
+                  return
+                }// TODO: implement else
+                console.log(e)
+              });;
+            e.stopPropagation()
+          }}>
+            <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
+          </Button>
         </CardContent>
           }
       </Card>
@@ -848,6 +957,7 @@ const Roles = {
   Admin: 3,
 }
 function stringToRole(string) {
+  if (!string) return
   switch(string.toLowerCase()) {
     case "user": return Roles.User;
     case "editor": return Roles.Editor;
@@ -856,6 +966,7 @@ function stringToRole(string) {
   }
 }
 function roleToString(role) {
+  if (!role) return
   switch(role) {
     case Roles.User: return "user";
     case Roles.Editor: return "editor";
@@ -874,13 +985,8 @@ root.render(<App />)
 //    View Charities and Filters/search functions
 //    Auth and Users
 //    Add/Edit/Delete Items (Creators)
-//      Remember that some of these details could simply be added to the description section instead of having a dedicated field for each detail
-//      for now, the below can just be strings if time is short. Eventually we want them to be optionally or mandatorally linked to a database entry for location, charity, or person/user.
 //      For each detail, update the existing flow (form, endpoints, database) to account for each field
 //        People who worked on the project (optionally linked to a user account)
-//        The location of the project (for now, probably just a string, not a selection/drop-down)
-//        The name of the charity and maybe email
-//        Project contact (such as email or homepage (eg. github))
 //    CSV Reports
 //      Query charity-projects and generate a csv from this
 //      project name and/or id
@@ -893,10 +999,6 @@ root.render(<App />)
 //      list of people
 //      location
 //    Archive
-//
-//    Simple install.py script for setting an admin user, and setting up the db
-//    Add test data
-//    A DEMONSTRATION OF THE PROJECT
 
 //  SHOULD HAVE
 //    BEFORE TAKING THIS TOO FAR, ASK FOR REQUIREMENTS
@@ -912,21 +1014,23 @@ root.render(<App />)
 //    Add/Edit/Delete Items
 //      how is validation for all user entrypoints
 //      Before taking this too far, ask for requirements
-//      We want an endpoint for each of the resources and for each endpoint, we want a GET, POST, AND PUT method. For some endpoints, we want a DELETE method whilst for others, we want a PUT method that archives the endpoint.
+//      We want an endpoint for each of the resources and for each endpoint, we want a GET, POST, AND PUT method. For some endpoints, we want a DELETE method whilst for others, we want a PUT method that archives the endpoint. We want to be able to create these resources in a new webpage and then select these resources from a dropdown when creating charity projects etc
+//        Technologies
+//        Locations
+//        Person/User
+//        Charities
+//          name
+//          description
+//          email
+//          location
 //        Create a document defining the endpoints (http methods for each), and the database tables that we want to maintain.
-//      IMPORTANT: Add/edit charities and select a charity (or charities) when creating charity projects etc
-//        name
-//        description
-//        email
-//        location
-//      Technologies
-//      Locations
 //    CSV Reports
 //      Define filters and sorts before generating a report
 //    Archive
 //
 //    responsive (mobile friendly)
 
+//TODO
 //  NICE TO HAVE
 //    View Charities and Filters/search functions
 //      sort options
@@ -936,39 +1040,40 @@ root.render(<App />)
 //    Add/Edit/Delete Items
 //      Feedback on successful creation/update
 //      Feedback on failed creation/update
-//      Images as part of the description (support markup?) or as their own field
-//      Users? or allow creators to edit/remove account details / accounts
-//      Allow creators to delete or archive items
-//      Move technology creation into its own webpage?!
+//      Support displaying images as part of the description (support markup?) or as their own field
+//      Allow admins to edit/remove user details / accounts. Currently, only the user's role can be edited.
+//      Allow creators to delete or archive items other than charity projects (such as technologies)
+//      Consider moving technology creation into its own webpage
 //    CSV Reports
-//      other formats like json
+//      Support generating reports for other formats such as json
 //    Archive
 //
-//    Responsive website
-//    close sql connections
+//    Make the website more responsive
 //    Lets keep the API callable from anyone (even via a curl request), therefore we must have server side validation as well as client side (how to handle duplicated validation across multiple programs)
-//    Don't use the default go logger
-//    Maybe we should change getCharityProjects function to not return technologies as well. What does gitlab do for pipelines
+//    Don't use the default Go logger
+//    Maybe we should change getCharityProjects function to not return technologies as well. What does gitlab do for their pipelines endpoint
 //      charity-projects/:name/technologies
-//    Abstract update, create, and delete technologies into one function (was this todo for the server or client?)
 //    Use transactions for sql queries
 //    Get SQL passwords for root and "ejoh" from a file or other more secure location
 //    sql Scan() error checking and variable assignment
 //    In the axios response handlers, have success/error popups
-//    Apply length validation based on table rules
+//    Apply length validation based on database table rules
+//    Display something even if the Go server is unavailable
 //    Put aside the file uploading for now as it may be hard
-//    Display something even if the Go server is down
 //    Consider how feasible it is to use SVGs
 //    Add tooltip on icon hover
 //    error handling
+//    close sql connections
+//    Abstract update, create, and delete technologies into one function (was this todo for the server or client?)
 
 
 
 //DONE:
 //  REQUIRED
 //    View Charities and Filters/search functions
-//      Make Charity List look better
-//      Wrap charity project cards, three per row
+//      A webpage that displays a list of charity projects with limited information for each list entry
+//      A webpage for displaying the charity project's full details
+//      Make Charity List look better and Wrap charity project cards, three per row
 //      Use a default icon if the image path string is empty, otherwise, display the image provided for each technology
 //      For each charity project fetch the relevant information from the database via the Go server
 //    Auth and Users
@@ -978,13 +1083,20 @@ root.render(<App />)
 //        server: Create User table
 //        server: Query for registration
 //      Generate keypair
-//      Add a login endpoint that will generate a JWT using the keypair
-//      make client store the token
-//      make client pass the token in for all requests
+//      Add a login endpoint that will generate a JWT using the keypair and make client store the token in a cookie
 //      make the server validate each request
 //      Add a logout endpoint that will clear the client's JWT cookie
 //      Redirect to login if not logged in
 //    Add/Edit/Delete Items
+//      Charity Project Fields:
+//        Name
+//        Short Description
+//        Long Description
+//        The location of the project (for now, probably just a string, not a selection/drop-down)
+//        Charity name
+//        Charity email
+//        Project contact (such as email or homepage (eg. github))
+//        Technologies
 //      Client validation (charity project):
 //        the same technology cannot be selected twice
 //        at least three technologies must be selected
@@ -1007,6 +1119,10 @@ root.render(<App />)
 //      Display an unarchive button for archived items
 //      Make React update the charity project list when items are archived/unarchived
 
+
+//    Simple install.py script for setting an admin user, and setting up the db
+//    Add test data
+//    A DEMONSTRATION OF THE PROJECT
 //    Navbar with tabs for Home, Archive, Login/Logout, and User Management
 //    Write drop database script
 //    Create tables as root user. Only give the Go server the limited priveliges that it needs
