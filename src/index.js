@@ -1,13 +1,17 @@
+import { userRole, Role, stringToRole, roleToString } from './role.js';
+import { NavigationDrawer } from './navigationDrawer.js';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import Card from '@mui/material/Card';
-import PlaceIcon from '@mui/icons-material/Place';
-import LocationOn from '@mui/icons-material/LocationOn';
-import {AppBar, Box, Button, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Toolbar, Tooltip, Typography} from '@mui/material';
+import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
+import {} from '@mui/icons-material';
+import { Box, Button, Card, CardHeader, CardActions, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea} from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
-import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom';
+import {BrowserRouter, Route, Routes} from 'react-router-dom';
+
+import './index.css';
 
 const marginTop = () => ({
   marginTop: "20px"
@@ -69,10 +73,10 @@ class UserManagement extends React.Component {
                       }
                     }}
                   >
-                    <MenuItem value={Roles.User} dense={true} key={0}>User</MenuItem>
-                    <MenuItem value={Roles.Editor} dense={true} key={1}>Editor</MenuItem>
-                    <MenuItem value={Roles.Creator} dense={true} key={2}>Creator</MenuItem>
-                    <MenuItem value={Roles.Admin} dense={true} key={3}>Admin</MenuItem>
+                    <MenuItem value={Role.User} dense={true} key={0}>User</MenuItem>
+                    <MenuItem value={Role.Editor} dense={true} key={1}>Editor</MenuItem>
+                    <MenuItem value={Role.Creator} dense={true} key={2}>Creator</MenuItem>
+                    <MenuItem value={Role.Admin} dense={true} key={3}>Admin</MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -82,11 +86,8 @@ class UserManagement extends React.Component {
                     username: user.Username,
                     role: roleToString(this.state.users[i].Role)
                   })
-                  console.log(e.target.value)
-                  console.log(jsonUser)
                   axios.put('http://localhost:8743/users/', jsonUser, { withCredentials: true })
                     .then((users) => {
-                      console.log(`successfully updated ${user.Username}'s role to ${e.target.value}.`)
                     }).catch((err) => { 
                       if (err.response && err.response.status === 401) // TODO: implement else
                         window.location.replace("/login")
@@ -118,7 +119,6 @@ class CharityProject extends React.Component {
       .then((charityProject) => {
         this.state.loading = false
         this.state.charityProject = charityProject.data
-        console.log(this.state)
         this.setState(this.state)
       }).catch((err) => {
         if (err.response && err.response.status === 401) // TODO: implement else
@@ -132,8 +132,8 @@ class CharityProject extends React.Component {
 
     return (
       <div style={{width: "85%", margin: "auto", ...marginTop()}}>
-        <CharityProjectCard charityProject={this.state.charityProject} width={"80%"} showLongDescription={true}/>
-        { userRole >= Roles.Editor && 
+        <CharityProjectCardLarge charityProject={this.state.charityProject} width={"80%"} showLongDescription={true}/>
+        { userRole() >= Role.Editor && 
           <Button href={`/edit-charity-project/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
             <Typography variant='body1'>Edit</Typography>
           </Button>
@@ -175,7 +175,6 @@ class Register extends React.Component {
     }
     const registerRequest = JSON.stringify(user)
 
-    console.log("register: registerRequest: ", registerRequest)
     axios.post('http://localhost:8743/register', registerRequest)
       .then((response) => {
         window.location.href = "/login"
@@ -266,13 +265,9 @@ class Login extends React.Component {
     }
     const loginRequest = JSON.stringify(user)
 
-    console.log("login: loginRequest", loginRequest)
     axios.post('http://localhost:8743/login', loginRequest, { withCredentials: true }) // withCredentials must be true so that the response header can hold cookies
       .then((response) => {
-        console.log("login Response handler: Request was successful!");
-        console.log(response.data)
         if (response.data.success) { // TODO: else
-          console.log(response.data)
           window.location.href = "/"
         }
       });
@@ -334,7 +329,6 @@ class Login extends React.Component {
 class TechnologySelect extends React.Component {
   render() {
     const menuItems = []
-    console.log(this.props.technologies)
     for (let i = 0; i < this.props.technologies.length; i++) {
       menuItems.push(<MenuItem value={this.props.technologies[i]} dense={true} key={i}>{this.props.technologies[i]}</MenuItem>)
     }
@@ -414,8 +408,6 @@ class ManageCharityProject extends React.Component {
       .then((responses) => {
         let technologies = responses[0].data
         let charityProject = responses[1]?.data
-        console.log("tech: ", technologies)
-        if (charityProject) console.log("charProj: ", charityProject)
         this.state.loading = false
         this.state.technologies = technologies
 
@@ -445,10 +437,8 @@ class ManageCharityProject extends React.Component {
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
     let technologySelects = []
-    console.log(this.state.charityProject)
     this.state.charityProject.technologies.forEach((technology, i) => {
       technologySelects.push(<TechnologySelect name={technology.name} error={technology.error} onChange={this.handleTechnologySelectChange} index={i} key={i} technologies={this.state.technologies}/>)
-      console.log(technologySelects)
     })
     return (
       <Stack direction="row" spacing={2} justifyContent="center" style={marginTop()}>
@@ -674,10 +664,8 @@ class ManageCharityProject extends React.Component {
     })
     const createCharityProjectRequest = JSON.stringify(charityProject)
 
-    console.log("createCharityProject: createCharityProjectRequest", createCharityProjectRequest)
     axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest, withCredentials: true })
       .then(() => {
-        console.log("createCharityProject Response handler: Request was successful!");
       }).catch((err) => { 
         if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
@@ -695,10 +683,8 @@ class ManageCharityProject extends React.Component {
     }
     const createTechnologyRequest = JSON.stringify(technology)
 
-    console.log("createTechnology: createTechnologyRequest", createTechnologyRequest)
     axios.post('http://localhost:8743/technologies', createTechnologyRequest, { withCredentials: true })
       .then(() => {
-        console.log("createTechnology Response handler: Request was successful!");
       }).catch((err) => { 
         if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
@@ -714,91 +700,116 @@ class ManageCharityProject extends React.Component {
   }
 }
           //<Button variant="contained" style={{...fontSize(), ...{marginTop: "10px", width: "20%"}}}>Create</Button>
+class CharityProjectCardLarge extends React.Component {
+  render() {
+    return (
+      <Card variant="outlined" style={{minWidth: this.props.width, maxWidth: this.props.width, margin: this.props.showLongDescription ? "auto" : "0", ...marginTop() }}>
+        <CardContent style={{flexGrow: 1}}>
+          { this.props.charityProject.Location &&
+            <div style={{display: "flex"}}>
+              <Place />
+              <Typography variant='body1'>{ this.props.charityProject.Location }</Typography>
+            </div>
+          }
+          { this.props.charityProject.CharityName &&
+            <div>
+              <p style={{marginBottom: 0}}>Charity Name</p>
+              <Typography variant='body1'>{ this.props.charityProject.CharityName }</Typography>
+            </div>
+          }
+          { this.props.charityProject.CharityEmail &&
+            <div>
+              <p style={{marginBottom: 0}}>Charity Email</p>
+              <Typography variant='body1'>{ this.props.charityProject.CharityEmail }</Typography>
+            </div>
+          }
+          { this.props.charityProject.ProjectEmail &&
+            <div>
+              <p style={{marginBottom: 0}}>Project Email</p>
+              <Typography variant='body1'>{ this.props.charityProject.ProjectEmail }</Typography>
+            </div>
+          }
+        </CardContent>
 
-class CharityProjectCard extends React.Component {
+        <CardContent >
+          <Typography variant='body1'>{ this.props.charityProject.LongDescription }</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+}
+class CharityProjectCardMedium extends React.Component {
   render() {
     return ( // Styling has to be applied here on the Card instead of on the CharityProjectCard
-      <Card style={{minWidth: this.props.width, maxWidth: this.props.width, cursor: "pointer", margin: this.props.showLongDescription ? "auto" : "0", ...marginTop(), display: "flex", flexDirection: "column"}} variant="outlined" onClick={(e) => {
-        if (!this.props.showLongDescription)
-          window.location.href=`/charity-project/${this.props.charityProject.Name}`
-      }}>
+      <Card variant="outlined" style={{width: this.props.width, marginTop: 40, display: "flex", flexDirection: "column", flexGrow: 1 }}>
 
-        <CardContent>
-          <Typography variant='h5'>{ this.props.charityProject.Name }</Typography>
-        </CardContent>
-        <CardContent style={{flexGrow: 1}}>
-          <Typography variant='body1'>{ this.props.charityProject.ShortDescription }</Typography>
-        </CardContent>
-
-        { this.props.showLongDescription && 
-          <CardContent style={{flexGrow: 1}}>
-            { this.props.charityProject.Location &&
-              <div style={{display: "flex"}}>
-                <PlaceIcon />
-                <Typography variant='body1'>{ this.props.charityProject.Location }</Typography>
-              </div>
-            }
-            { this.props.charityProject.CharityName &&
-              <div>
-                <p style={{marginBottom: 0}}>Charity Name</p>
-                <Typography variant='body1'>{ this.props.charityProject.CharityName }</Typography>
-              </div>
-            }
-            { this.props.charityProject.CharityEmail &&
-              <div>
-                <p style={{marginBottom: 0}}>Charity Email</p>
-                <Typography variant='body1'>{ this.props.charityProject.CharityEmail }</Typography>
-              </div>
-            }
-            { this.props.charityProject.ProjectEmail &&
-              <div>
-                <p style={{marginBottom: 0}}>Project Email</p>
-                <Typography variant='body1'>{ this.props.charityProject.ProjectEmail }</Typography>
-              </div>
-            }
-          </CardContent>
-        }
-
-        <CardContent style={{margin: "auto", width: "max-content"}}>
-          <Tooltip title={this.props.charityProject.Technologies[0].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[0].Name}>
-              <img 
-                src={this.props.charityProject.Technologies[0].SVG !== '' ? this.props.charityProject.Technologies[0].SVG : "/assets/icons/default-technology-icon.svg"}
-                alt={this.props.charityProject.Technologies[0].Name}
-                width="50"
-                height="50"
-              />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={this.props.charityProject.Technologies[1].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[1].Name}>
-              <img 
-                src={this.props.charityProject.Technologies[1].SVG !== '' ? this.props.charityProject.Technologies[1].SVG : "/assets/icons/default-technology-icon.svg"}
-                alt={this.props.charityProject.Technologies[1].Name}
-                width="50"
-                height="50"
-              />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={this.props.charityProject.Technologies[2].Name}>
-            <IconButton onClick={this.handleClick} style={{padding: 0}} aria-label={this.props.charityProject.Technologies[2].Name}>
-              <img 
-                src={this.props.charityProject.Technologies[2].SVG !== '' ? this.props.charityProject.Technologies[2].SVG : "/assets/icons/icons8-react.svg"}
-                alt={this.props.charityProject.Technologies[2].Name}
-                width="50"
-                height="50"
-              />
-            </IconButton>
-          </Tooltip>
-        </CardContent>
-        { this.props.showLongDescription && 
+        <CardActionArea href={`/charity-project/${this.props.charityProject.Name}`} style={{flexGrow: 1}} >
+          <CardHeader title={this.props.charityProject.Name} subheader={this.props.charityProject.CharityName} />
           <CardContent >
-            <Typography variant='body1'>{ this.props.charityProject.LongDescription }</Typography>
+            <Typography variant='body1' >{ this.props.charityProject.ShortDescription }</Typography>
           </CardContent>
+
+          <CardContent>
+            <TechnologyIcon technology={this.props.charityProject.Technologies[0]} style={{...marginTop()}} />
+            <TechnologyIcon technology={this.props.charityProject.Technologies[1]} style={{...marginTop(), marginLeft: 5}} />
+            <TechnologyIcon technology={this.props.charityProject.Technologies[2]} style={{...marginTop(), marginLeft: 5}} />
+          </CardContent>
+        </CardActionArea >
+
+        <Divider />
+        <CharityProjectCardActions charityProject={this.props.charityProject}/>
+      </Card>
+    );
+  }
+}
+
+class TechnologyIcon extends React.Component {
+  render() {
+    return (
+      <Tooltip title={this.props.technology.Name} >
+        <IconButton onClick={this.handleClick} style={{padding: 0, ...this.props.style}}>
+          <img 
+            width="50"
+            height="50"
+            src={this.props.technology.SVG !== '' ? this.props.technology.SVG : "/assets/icons/default-technology-icon.svg"}
+          />
+        </IconButton>
+      </Tooltip>
+    );
+  }
+}
+
+class CharityProjectCardActions extends React.Component {
+  render() {
+    return (
+          <CardActions >
+        { userRole() >= Role.Creator &&
+          <div >
+            <Tooltip title={this.props.charityProject.Archived ? "Unarchive" : "Archive" }>
+              <IconButton value={this.props.charityProject.Name} onClick={toggleArchiveCharityProject}>
+                { this.props.charityProject.Archived ? <Unarchive /> : <Archive /> }
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Edit">
+              <IconButton href={`/edit-charity-project/${this.props.charityProject.Name}`}>
+                <Edit />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Delete">
+              <IconButton /* TODO: send DELETE request to server after a confirmation prompt */>
+                <Delete />
+              </IconButton>
+            </Tooltip>
+          </div>
         }
-          { userRole >= Roles.Creator &&
-        <CardContent >
-          <Button variant="contained" style={marginTop()} value={this.props.charityProject.Name} onClick={(e, charityProjectName = this.props.charityProject.Name) => {
+          </CardActions>
+    );
+  }
+}
+
+const toggleArchiveCharityProject = (e, charityProjectName = this.props.charityProject.Name) => {
           let charityProject = {
             oldName: charityProjectName,
             archived: this.props.charityProject.Archived ? false : true
@@ -813,18 +824,9 @@ class CharityProjectCard extends React.Component {
                   window.location.replace("/login")
                   return
                 }// TODO: implement else
-                console.log(e)
               });;
             e.stopPropagation()
-          }}>
-            <Typography variant='body1'>{this.props.charityProject.Archived ? "Remove from Archive" : "Archive"}</Typography>
-          </Button>
-        </CardContent>
           }
-      </Card>
-    );
-  }
-}
 
 class Home extends React.Component {
   constructor(props) {
@@ -851,7 +853,8 @@ class Home extends React.Component {
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
     return (
-      <div style={{width: "90%", margin: "auto", ...marginTop()}}>
+      <div>
+        <Typography variant='h4' style={{ flexBasis: "100%", textAlign: "center", ...marginTop() }}>Charity Projects</Typography>
         <TextField
           label="Name"
           style={marginTop()}
@@ -861,10 +864,9 @@ class Home extends React.Component {
             this.setState(this.state)
           }}
         />
-        <div style={{display: "flex", flexWrap: "wrap", gap: "2%", ...marginTop()}}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto", ...marginTop()}}>
           {
             this.state.charityProjects.filter((value) => {
-              console.log(this.state.filter)
               //let match = false
               if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
                 value.ShortDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
@@ -885,7 +887,7 @@ class Home extends React.Component {
               return match
               */
             }).map((charityProject, i) =>
-              <CharityProjectCard
+              <CharityProjectCardMedium
                 charityProject={charityProject}
                 key={i}
                 width={"19rem"}
@@ -896,7 +898,7 @@ class Home extends React.Component {
               />)
           }
         </div>
-        { userRole >= Roles.Creator &&
+        { userRole() >= Role.Creator &&
           <Button href="/create-charity-project" variant="contained" style={marginTop()}>
             <Typography variant='body1'>New Charity Project</Typography>
           </Button>
@@ -913,28 +915,10 @@ class App extends React.Component {
   }
   render() {
     return (
+      <div style={{display: "flex"}}>
+        <NavigationDrawer />
+
       <BrowserRouter>
-        <AppBar position='static'>
-          <Toolbar>
-            <div style={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Typography variant='h5' style={{cursor: "pointer", width: "max-content"}} onClick={() => window.location.href="/"}>Charity Showcase</Typography>
-            </div>
-            {userRole >= Roles.Creator && <Button color='inherit' style={marginLeft()} href="/archive">Archive</Button>}
-            {userRole >= Roles.Admin && <Button color='inherit' style={marginLeft()} href="/user-management">User Management</Button>}
-            <Button color='inherit' style={marginLeft()} onClick={() => {
-              if (document.cookie.match("loggedIn=true")) {
-                // TODO: I think there is a more conventional method than post for login and logout
-                axios.post('http://localhost:8743/logout', null, { withCredentials: true }) // withCredentials must be true so that the response header can hold cookies
-                  .then(() => {
-                    window.location.href = "/login"
-                  });
-              }
-              window.location.href = "/login"
-            }}>
-              {document.cookie.match("loggedIn=true") ? "Logout" : "Login"}
-            </Button>
-          </Toolbar>
-        </AppBar>
         <Routes>
           <Route path="/" element={<Home archive="notArchived"/>}/>
           <Route path="/archive" element={<Home archive="archived"/>}/>
@@ -946,36 +930,11 @@ class App extends React.Component {
           <Route path="/register" element={<Register/>}/>
         </Routes>
       </BrowserRouter>
+      </div>
     )
   }
 }
 
-const Roles = {
-  User: 0,
-  Editor: 1,
-  Creator: 2,
-  Admin: 3,
-}
-function stringToRole(string) {
-  if (!string) return
-  switch(string.toLowerCase()) {
-    case "user": return Roles.User;
-    case "editor": return Roles.Editor;
-    case "creator": return Roles.Creator;
-    case "admin": return Roles.Admin;
-  }
-}
-function roleToString(role) {
-  if (!role) return
-  switch(role) {
-    case Roles.User: return "user";
-    case Roles.Editor: return "editor";
-    case Roles.Creator: return "creator";
-    case Roles.Admin: return "admin";
-  }
-}
-
-let userRole = stringToRole(document.cookie.match(/role=(.*),*/)?.at(1))
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />)
