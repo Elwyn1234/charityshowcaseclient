@@ -1,24 +1,17 @@
+import { CharityProjectList, CharityProject, ManageCharityProject } from './charityProjects/charityProjectViews.js';
 import { userRole, Role, stringToRole, roleToString } from './role.js';
 import { NavigationDrawer } from './navigationDrawer.js';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
 import {} from '@mui/icons-material';
-import { Box, Button, Card, CardHeader, CardActions, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea} from '@mui/material';
+import { Button, Card, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea} from '@mui/material';
 import axios from 'axios';
-import {Stack} from '@mui/system';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
 
 import './index.css';
 
-const marginTop = () => ({
-  marginTop: "20px"
-})
-const marginLeft = () => ({
-  marginLeft: "20px"
-})
 const fontSize = () => ({
     fontSize: "0.5rem"
 })
@@ -50,10 +43,10 @@ class UserManagement extends React.Component {
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
     return (
-      <div style={{display: "flex", flexDirection: "column", minWidth: "max-content", width: "50%", margin: "auto", ...marginTop()}}>
+      <div style={{display: "flex", flexDirection: "column", minWidth: "max-content", width: "50%", margin: "auto", }} className="topMargin">
         {
           this.state.users.map((user, i) =>
-            <Card style={{...marginTop(), display: "flex", gap: "3rem", padding: "1rem"}} variant="outlined" key={i}>
+            <Card style={{ display: "flex", gap: "3rem", padding: "1rem" }} variant="outlined" key={i} className="topMargin">
               <CardContent style={{flexGrow: 1, margin: "auto", padding: 0}}>
                 <Typography>{ user.Username }</Typography>
               </CardContent>
@@ -106,43 +99,6 @@ class UserManagement extends React.Component {
   }
 }
 
-class CharityProject extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      loading: true,
-    }
-
-    let charityProjectName = window.location.pathname.split("/")[2]
-    axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`, { withCredentials: true })
-      .then((charityProject) => {
-        this.state.loading = false
-        this.state.charityProject = charityProject.data
-        this.setState(this.state)
-      }).catch((err) => {
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });
-  }
-
-  render() {
-    if (this.state.loading)
-      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
-
-    return (
-      <div style={{width: "85%", margin: "auto", ...marginTop()}}>
-        <CharityProjectCardLarge charityProject={this.state.charityProject} width={"80%"} showLongDescription={true}/>
-        { userRole() >= Role.Editor && 
-          <Button href={`/edit-charity-project/${this.state.charityProject.Name}`} variant="contained" style={marginTop()}>
-            <Typography variant='body1'>Edit</Typography>
-          </Button>
-        }
-      </div>
-    );
-  }
-}
-
 class Register extends React.Component {
   constructor(props) {
     super(props)
@@ -183,11 +139,11 @@ class Register extends React.Component {
 
   render() {
     return (
-      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto", ...marginTop()}}>
+      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto"}} className="topMargin">
         <h2>Register</h2>
         <TextField
           label="Username"
-          style={marginTop()}
+          className="topMargin"
           size="small"
           required
           error={this.state.username.error}
@@ -202,7 +158,7 @@ class Register extends React.Component {
         <TextField
           label="Password"
           type='password'
-          style={marginTop()}
+          className="topMargin"
           size="small"
           required
           error={this.state.password.error}
@@ -218,14 +174,15 @@ class Register extends React.Component {
           onClick={this.register}
           variant="contained"
           size='small'
-          style={{...marginTop(), width: "max-content"}}
+          className="topMargin"
         >
           Register
         </Button>
         <Button
           href="/register"
           size='small'
-          style={{...marginTop(), width: "max-content"}}
+          style={{width: "max-content"}}
+          className="topMargin"
         >
           Login
         </Button>
@@ -275,11 +232,11 @@ class Login extends React.Component {
 
   render() {
     return (
-      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto", ...marginTop()}}>
+      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto"}} className="topMargin">
         <h2>Login</h2>
         <TextField
           label="Username"
-          style={marginTop()}
+          className="topMargin"
           size="small"
           required
           error={this.state.username.error}
@@ -294,7 +251,7 @@ class Login extends React.Component {
         <TextField
           label="Password"
           type='password'
-          style={marginTop()}
+          className="topMargin"
           size="small"
           required
           error={this.state.password.error}
@@ -310,14 +267,16 @@ class Login extends React.Component {
           onClick={this.login}
           variant="contained"
           size='small'
-          style={{...marginTop(), width: "max-content"}}
+          style={{width: "max-content"}}
+          className="topMargin"
         >
           Login
         </Button>
         <Button
           href="/register"
           size='small'
-          style={{...marginTop(), width: "max-content"}}
+          style={{width: "max-content"}}
+          className="topMargin"
         >
           Register
         </Button>
@@ -325,589 +284,7 @@ class Login extends React.Component {
     )
   }
 }
-
-class TechnologySelect extends React.Component {
-  render() {
-    const menuItems = []
-    for (let i = 0; i < this.props.technologies.length; i++) {
-      menuItems.push(<MenuItem value={this.props.technologies[i]} dense={true} key={i}>{this.props.technologies[i]}</MenuItem>)
-    }
-    return (
-      <FormControl style={{...marginTop(), width: "30%"}} size="small">
-        <InputLabel id="tech-stack-label1">{`Tech ${this.props.index + 1}`}</InputLabel>
-        <Select
-          labelId='tech-stack-label1'
-          label={`Tech ${this.props.index + 1}`}
-          value={this.props.name}
-          required
-          error={this.props.error}
-          onChange={(e) => {
-            if (e.target.value !== null && e.target.value !== '') {
-              this.props.onChange(e.target.value, false, this.props.index)
-            }
-          }}
-        >
-          {menuItems}
-        </Select>
-      </FormControl>
-    )
-  }
-}
-
-class ManageCharityProject extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      loading: true,
-      technologyCount: 3, // TODO: aksjfh
-      technology: {
-        name: {
-          value: '',
-          error: false,
-        },
-        image: null,
-      },
-      charityProject: {
-        oldName: '',
-        name: {
-          value: '',
-          error: false,
-        },
-        shortDescription: {
-          value: '',
-          error: false,
-        },
-        longDescription: '',
-        charityName: '',
-        charityEmail: '',
-        projectEmail: {
-          value: '',
-          error: false,
-        },
-        location: {
-          value: '',
-          error: false,
-        },
-        technologies: [],
-      },
-      technologies: null, // a list of all technologies from which the user can select from
-    }
-    for (let i = 0; i < 3; i++) {
-      this.state.charityProject.technologies.push({ name: '', error: false })
-    }
-
-    let promises = []
-    promises.push(axios.get('http://localhost:8743/technologies', { withCredentials: true }))
-    if (this.props.method === "put") {
-      let charityProjectName = window.location.pathname.split("/")[2]
-      promises.push(axios.get(`http://localhost:8743/charity-projects/${charityProjectName}`, { withCredentials: true }))
-    }
-
-    Promise.all(promises)
-      .then((responses) => {
-        let technologies = responses[0].data
-        let charityProject = responses[1]?.data
-        this.state.loading = false
-        this.state.technologies = technologies
-
-        if (charityProject) {
-          this.state.charityProject.oldName = charityProject.Name
-          this.state.charityProject.name.value = charityProject.Name
-          this.state.charityProject.shortDescription.value = charityProject.ShortDescription
-          this.state.charityProject.longDescription = charityProject.LongDescription
-          this.state.charityProject.charityName = charityProject.CharityName
-          this.state.charityProject.charityEmail = charityProject.CharityEmail
-          this.state.charityProject.projectEmail.value = charityProject.ProjectEmail
-          this.state.charityProject.location.value = charityProject.Location
-          this.state.charityProject.archived = charityProject.Archived
-          this.state.charityProject.technologies = charityProject.Technologies.map((technology) => {
-            return { oldName: technology.Name, name: technology.Name, error: false }
-          })
-        }
-        this.setState(this.state)
-      }).catch((err) => {
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });
-  }
-
-  render() {
-    if (this.state.loading)
-      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
-
-    let technologySelects = []
-    this.state.charityProject.technologies.forEach((technology, i) => {
-      technologySelects.push(<TechnologySelect name={technology.name} error={technology.error} onChange={this.handleTechnologySelectChange} index={i} key={i} technologies={this.state.technologies}/>)
-    })
-    return (
-      <Stack direction="row" spacing={2} justifyContent="center" style={marginTop()}>
-        <FormGroup style={{width: "60%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
-          <h2>Charity Project</h2>
-          <TextField
-            label="Name"
-            style={marginTop()}
-            size="small"
-            required
-            value={this.state.charityProject.name.value}
-            error={this.state.charityProject.name.error}
-            onChange={(e) => {
-              if (e.target.value !== null && e.target.value !== '') {
-                this.state.charityProject.name.error = false
-              }
-              this.state.charityProject.name.value = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <TextField
-            label="Summary"
-            style={marginTop()}
-            size="small"
-            required
-            value={this.state.charityProject.shortDescription.value}
-            error={this.state.charityProject.shortDescription.error}
-            onChange={(e) => {
-              if (e.target.value !== null && e.target.value !== '') {
-                this.state.charityProject.shortDescription.error = false
-              }
-              this.state.charityProject.shortDescription.value = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <TextField
-            label="Description"
-            style={marginTop()}
-            size="small"
-            value={this.state.charityProject.longDescription}
-            onChange={(e) => {
-              this.state.charityProject.longDescription = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <TextField
-            label="Charity Name"
-            style={marginTop()}
-            size="small"
-            value={this.state.charityProject.charityName}
-            onChange={(e) => {
-              this.state.charityProject.charityName = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <TextField
-            label="Charity Email"
-            style={marginTop()}
-            size="small"
-            value={this.state.charityProject.charityEmail}
-            onChange={(e) => {
-              this.state.charityProject.charityEmail = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <TextField
-            label="Project Email"
-            style={marginTop()}
-            size="small"
-            required
-            value={this.state.charityProject.projectEmail.value}
-            error={this.state.charityProject.projectEmail.error}
-            onChange={(e) => {
-              if (e.target.value !== null && e.target.value !== '') {
-                this.state.charityProject.projectEmail.error = false
-              }
-              this.state.charityProject.projectEmail.value = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <TextField
-            label="Location"
-            style={marginTop()}
-            size="small"
-            required
-            value={this.state.charityProject.location.value}
-            error={this.state.charityProject.location.error}
-            onChange={(e) => {
-              if (e.target.value !== null && e.target.value !== '') {
-                this.state.charityProject.location.error = false
-              }
-              this.state.charityProject.location.value = e.target.value
-              this.setState(this.state)
-            }}
-          />
-  
-          <Stack direction="row" spacing="auto" justifyContent="center">
-            {technologySelects}
-          </Stack>
-  
-          <Button
-            variant="contained"
-            size='small'
-            style={{...marginTop(), width: "max-content"}}
-            onClick={() => {
-              this.state.charityProject.technologies.push({ name: '', error: false, key: this.state.charityProject.technologies.length})
-              this.setState(this.state)
-            }}>
-              Add Technology
-          </Button>
-  
-          <Button
-            variant="contained"
-            size='small'
-            style={{...marginTop(), width: "max-content"}}
-            onClick={this.createCharityProject}
-          >
-            { this.props.method === "post" ? "Create" : "Update" }
-          </Button>
-
-          { 
-            // this.props.method === "put" &&
-            // <Button
-            //   variant="contained"
-            //   size='small'
-            //   style={{...marginTop(), width: "max-content"}}
-            //   // onClick={this.createCharityProject} // TODO: make work
-            // >
-            //   {this.state.charityProject.archived ? "Remove from Archive" : "Archive"}
-            // </Button>
-          }
-        </FormGroup>
-
-        <FormGroup style={{width: "20%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
-          <h2>Technology</h2>
-          <TextField
-            label="Name"
-            style={marginTop()}
-            size="small"
-            required
-            error={this.state.technology.name.error}
-            onChange={(e) => {
-              if (e.target.value !== null && e.target.value !== '') {
-                this.state.technology.name.error = false
-              }
-              this.state.technology.name.value = e.target.value
-              this.setState(this.state)
-            }}
-          />
-          <Button
-            variant="contained"
-            size='small'
-            style={{...marginTop(), width: "max-content"}}
-            component="label"
-            onChange={() => this.setState({...this.state, technology: {...this.state.technology, image: document.getElementById('techFile').files[0]}})}
-          >
-            Upload Image
-            <input id='techFile' type='file' hidden/>
-          </Button>
-          <Button
-            variant="contained"
-            size='small'
-            style={{...marginTop(), width: "max-content"}}
-            onClick={this.createTechnology}
-          >
-            Create
-          </Button>
-        </FormGroup>
-      </Stack>
-    )
-  }
-
-  createCharityProject = () => {
-    let valid = true;
-    if (this.state.charityProject.name.value === null || this.state.charityProject.name.value === "") {
-      this.state.charityProject.name.error = true
-      valid = false
-    }
-    if (this.state.charityProject.shortDescription.value === null || this.state.charityProject.shortDescription.value === "") {
-      this.state.charityProject.shortDescription.error = true
-      valid = false
-    }
-    if (this.state.charityProject.projectEmail.value === null || this.state.charityProject.projectEmail.value === "") {
-      this.state.charityProject.projectEmail.error = true
-      valid = false
-    }
-    if (this.state.charityProject.location.value === null || this.state.charityProject.location.value === "") {
-      this.state.charityProject.location.error = true
-      valid = false
-    }
-    this.state.charityProject.technologies.forEach((technology, i) => {
-      if (technology.name === null || technology.name === '') {
-        technology.error = true
-        valid = false
-      }
-      this.state.charityProject.technologies.forEach((otherTechnology, j) => {
-        if (i === j) return
-        if (technology.name === otherTechnology.name) {
-          technology.error = true
-          otherTechnology.error = true
-          valid = false
-        }
-      })
-    })
-    if (!valid) {
-      this.setState(this.state)
-      return
-    }
-
-    let charityProject = {
-      oldName: this.state.charityProject.oldName,
-      name: this.state.charityProject.name.value,
-      shortDescription: this.state.charityProject.shortDescription.value,
-      longDescription: this.state.charityProject.longDescription,
-      charityName: this.state.charityProject.charityName,
-      charityEmail: this.state.charityProject.charityEmail,
-      projectEmail: this.state.charityProject.projectEmail.value,
-      location: this.state.charityProject.location.value,
-      technologies: []
-    }
-    this.state.charityProject.technologies.forEach((technology) => {
-      charityProject.technologies.push({oldName: technology.oldName, name: technology.name})
-    })
-    const createCharityProjectRequest = JSON.stringify(charityProject)
-
-    axios({method: this.props.method, url: 'http://localhost:8743/charity-projects/', data: createCharityProjectRequest, withCredentials: true })
-      .then(() => {
-      }).catch((err) => { 
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });;
-  }
-
-  createTechnology = () => { // TODO: image uploading is not implemented, currently the name is the only field used
-    if (this.state.technology.name.value === null || this.state.technology.name.value === "") {
-      this.state.technology.name.error = true
-      this.setState(this.state)
-      return
-    }
-    let technology = {
-      name: this.state.technology.name.value
-    }
-    const createTechnologyRequest = JSON.stringify(technology)
-
-    axios.post('http://localhost:8743/technologies', createTechnologyRequest, { withCredentials: true })
-      .then(() => {
-      }).catch((err) => { 
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });;
-  }
-
-  handleTechnologySelectChange = (name, error, i) => {
-    this.state.charityProject.technologies[i] = {
-      name: name,
-      error: error,
-    }
-    this.setState(this.state)
-  }
-}
           //<Button variant="contained" style={{...fontSize(), ...{marginTop: "10px", width: "20%"}}}>Create</Button>
-class CharityProjectCardLarge extends React.Component {
-  render() {
-    return (
-      <Card variant="outlined" style={{minWidth: this.props.width, maxWidth: this.props.width, margin: this.props.showLongDescription ? "auto" : "0", ...marginTop() }}>
-        <CardContent style={{flexGrow: 1}}>
-          { this.props.charityProject.Location &&
-            <div style={{display: "flex"}}>
-              <Place />
-              <Typography variant='body1'>{ this.props.charityProject.Location }</Typography>
-            </div>
-          }
-          { this.props.charityProject.CharityName &&
-            <div>
-              <p style={{marginBottom: 0}}>Charity Name</p>
-              <Typography variant='body1'>{ this.props.charityProject.CharityName }</Typography>
-            </div>
-          }
-          { this.props.charityProject.CharityEmail &&
-            <div>
-              <p style={{marginBottom: 0}}>Charity Email</p>
-              <Typography variant='body1'>{ this.props.charityProject.CharityEmail }</Typography>
-            </div>
-          }
-          { this.props.charityProject.ProjectEmail &&
-            <div>
-              <p style={{marginBottom: 0}}>Project Email</p>
-              <Typography variant='body1'>{ this.props.charityProject.ProjectEmail }</Typography>
-            </div>
-          }
-        </CardContent>
-
-        <CardContent >
-          <Typography variant='body1'>{ this.props.charityProject.LongDescription }</Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-}
-class CharityProjectCardMedium extends React.Component {
-  render() {
-    return ( // Styling has to be applied here on the Card instead of on the CharityProjectCard
-      <Card variant="outlined" style={{width: this.props.width, marginTop: 40, display: "flex", flexDirection: "column", flexGrow: 1 }}>
-
-        <CardActionArea href={`/charity-project/${this.props.charityProject.Name}`} style={{flexGrow: 1}} >
-          <CardHeader title={this.props.charityProject.Name} subheader={this.props.charityProject.CharityName} />
-          <CardContent >
-            <Typography variant='body1' >{ this.props.charityProject.ShortDescription }</Typography>
-          </CardContent>
-
-          <CardContent>
-            <TechnologyIcon technology={this.props.charityProject.Technologies[0]} style={{...marginTop()}} />
-            <TechnologyIcon technology={this.props.charityProject.Technologies[1]} style={{...marginTop(), marginLeft: 5}} />
-            <TechnologyIcon technology={this.props.charityProject.Technologies[2]} style={{...marginTop(), marginLeft: 5}} />
-          </CardContent>
-        </CardActionArea >
-
-        <Divider />
-        <CharityProjectCardActions charityProject={this.props.charityProject}/>
-      </Card>
-    );
-  }
-}
-
-class TechnologyIcon extends React.Component {
-  render() {
-    return (
-      <Tooltip title={this.props.technology.Name} >
-        <IconButton onClick={this.handleClick} style={{padding: 0, ...this.props.style}}>
-          <img 
-            width="50"
-            height="50"
-            src={this.props.technology.SVG !== '' ? this.props.technology.SVG : "/assets/icons/default-technology-icon.svg"}
-          />
-        </IconButton>
-      </Tooltip>
-    );
-  }
-}
-
-class CharityProjectCardActions extends React.Component {
-  render() {
-    return (
-          <CardActions >
-        { userRole() >= Role.Creator &&
-          <div >
-            <Tooltip title={this.props.charityProject.Archived ? "Unarchive" : "Archive" }>
-              <IconButton value={this.props.charityProject.Name} onClick={toggleArchiveCharityProject}>
-                { this.props.charityProject.Archived ? <Unarchive /> : <Archive /> }
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Edit">
-              <IconButton href={`/edit-charity-project/${this.props.charityProject.Name}`}>
-                <Edit />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Delete">
-              <IconButton /* TODO: send DELETE request to server after a confirmation prompt */>
-                <Delete />
-              </IconButton>
-            </Tooltip>
-          </div>
-        }
-          </CardActions>
-    );
-  }
-}
-
-const toggleArchiveCharityProject = (e, charityProjectName = this.props.charityProject.Name) => {
-          let charityProject = {
-            oldName: charityProjectName,
-            archived: this.props.charityProject.Archived ? false : true
-          } // TODO: rename oldName to name and rename name to newName
-          const updateCharityProjectRequest = JSON.stringify(charityProject)
-            axios.put('http://localhost:8743/charity-projects/', updateCharityProjectRequest, {withCredentials: true }) // TODO: this endpoint should probably be /charity-projects/:name
-              .then(() => {
-                if (this.props.removeMe)
-                  this.props.removeMe()
-              }).catch((err) => { 
-                if (err.response && err.response.status === 401) {
-                  window.location.replace("/login")
-                  return
-                }// TODO: implement else
-              });;
-            e.stopPropagation()
-          }
-
-class Home extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      filter: "",
-      loading: true,
-    }
-
-    axios.get('http://localhost:8743/charity-projects/?' + this.props.archive, { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
-      .then((charityProjects) => {
-        this.state.loading = false
-        this.state.charityProjects = charityProjects.data
-        this.setState(this.state)
-      }).catch((err) => { 
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });
-  }
-
-  render() {
-    if (this.state.loading)
-      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
-
-    return (
-      <div>
-        <Typography variant='h4' style={{ flexBasis: "100%", textAlign: "center", ...marginTop() }}>Charity Projects</Typography>
-        <TextField
-          label="Name"
-          style={marginTop()}
-          size="small"
-          onChange={(e) => {
-            this.state.filter = e.target.value
-            this.setState(this.state)
-          }}
-        />
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto", ...marginTop()}}>
-          {
-            this.state.charityProjects.filter((value) => {
-              //let match = false
-              if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.ShortDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.LongDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.Technologies.find((technology) => {
-                  if (technology.Name.toLowerCase().match(this.state.filter.toLowerCase()))
-                    return true
-                  return false
-                })
-              )
-                return true
-              return false
-              /*
-              value.Technologies.forEach((technology) => {
-                if (technology.Name.match(this.state.filter))
-                  match = true
-              })
-              return match
-              */
-            }).map((charityProject, i) =>
-              <CharityProjectCardMedium
-                charityProject={charityProject}
-                key={i}
-                width={"19rem"}
-                showLongDescription={false}
-                removeMe={() => {
-                  this.state.charityProjects = this.state.charityProjects.filter((val, nestedIndex) => nestedIndex !== i);
-                  this.setState(this.state) }}
-              />)
-          }
-        </div>
-        { userRole() >= Role.Creator &&
-          <Button href="/create-charity-project" variant="contained" style={marginTop()}>
-            <Typography variant='body1'>New Charity Project</Typography>
-          </Button>
-        }
-      </div>
-    );
-  }
-}
-
 class App extends React.Component {
   constructor(props) {
     super(props)
@@ -920,8 +297,8 @@ class App extends React.Component {
 
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home archive="notArchived"/>}/>
-          <Route path="/archive" element={<Home archive="archived"/>}/>
+          <Route path="/" element={<CharityProjectList archive="notArchived"/>}/>
+          <Route path="/archive" element={<CharityProjectList archive="archived"/>}/>
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
