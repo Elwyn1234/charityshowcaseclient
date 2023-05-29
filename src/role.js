@@ -3,10 +3,10 @@ export { userRole, Role, stringToRole, roleToString }
 const userRole = () => stringToRole(document.cookie.match(/role=(.*),*/)?.at(1))
 
 const Role = {
-  User: 0,
-  Editor: 1,
-  Creator: 2,
-  Admin: 3,
+  User: 1,
+  Editor: 2,
+  Creator: 3,
+  Admin: 4,
 }
 function stringToRole(string) {
   if (!string) return
