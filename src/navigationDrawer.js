@@ -1,16 +1,18 @@
 import { userRole, Role } from './role.js';
 
-import React from 'react';
-import { Home as HomeIcon, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon } from '@mui/icons-material';
+import React, {useState} from 'react';
+import { Home as HomeIcon, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, DarkMode, LightMode } from '@mui/icons-material';
 import {} from '@mui/icons-material';
-import { Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Toolbar, Typography} from '@mui/material';
+import { Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Switch, Toolbar, Tooltip, Typography} from '@mui/material';
 import axios from 'axios';
-
-import './index.css';
 
 export { NavigationDrawer }
 
 class NavigationDrawer extends React.Component {
+  constructor(props) {
+    super(props)
+  }
+  
   render() {
     return (
       <Drawer anchor='left' open={true} variant='permanent' sx={{
@@ -23,30 +25,29 @@ class NavigationDrawer extends React.Component {
         </Toolbar>
         <Divider />
         <List>
-        <ListSubheader>General</ListSubheader>
+          <ListSubheader>General</ListSubheader>
           <HomeListItem />
           <CharityProjectsListItem />
           <CharitiesListItem />
           <ContributorsListItem />
           <LocationsListItem />
           <TechnologiesListItem />
-          {
-            userRole() >= Role.Creator &&
-            <div>
-              <Divider />
-              <ListSubheader>Administration</ListSubheader>
-            </div>
-          }
-          {
-            userRole() >= Role.Admin && <UsersListItem />
-          }
-          {
-            userRole() >= Role.Creator && <ArchiveListItem />
-          }
-        <Divider />
-          {
-            isLoggedIn() ? <LogoutListItem /> : <LoginListItem />
-          }
+
+          { userRole() >= Role.Creator && <Divider /> }
+          { userRole() >= Role.Creator && <ListSubheader>Administration</ListSubheader> }
+          { userRole() >= Role.Admin && <UsersListItem /> }
+          { userRole() >= Role.Creator && <ArchiveListItem /> }
+
+          <Divider />
+          { isLoggedIn() ? <LogoutListItem /> : <LoginListItem /> }
+
+          <ListItem>
+            <ListItemIcon>
+              <DarkMode />
+            </ListItemIcon>
+            <ListItemText primary="Dark Mode" />
+            <Switch edge="end" onChange={this.props.onThemeToggled} checked={this.props.isDarkTheme} />
+          </ListItem>
         </List>
       </Drawer>
     )

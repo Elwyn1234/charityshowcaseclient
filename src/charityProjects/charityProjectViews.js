@@ -7,8 +7,7 @@ import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineerin
 import { Button, CircularProgress, FormGroup, TextField, Typography, } from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
-
-import '../index.css';
+import {theme} from "../theme";
 
 export { CharityProjectList, CharityProject, ManageCharityProject }
 
@@ -38,17 +37,16 @@ class CharityProjectList extends React.Component {
 
     return (
       <div>
-        <Typography variant='h4' style={{ flexBasis: "100%", textAlign: "center" }} className="topMargin">Charity Projects</Typography>
+        <Typography variant='h4' sx={{ flexBasis: "100%", textAlign: "center", marginTop: theme.mediumMargin  }} >Charity Projects</Typography>
         <TextField
           label="Name"
-          className="topMargin"
           size="small"
           onChange={(e) => {
             this.state.filter = e.target.value
             this.setState(this.state)
           }}
         />
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto"}} className="topMargin">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto", marginTop: theme.mediumMargin }} >
           {
             this.state.charityProjects.filter((value) => {
               //let match = false
@@ -83,7 +81,7 @@ class CharityProjectList extends React.Component {
           }
         </div>
         { userRole() >= Role.Creator &&
-          <Button href="/create-charity-project" variant="contained" className="topMargin" >
+          <Button href="/create-charity-project" variant="contained" >
             <Typography variant='body1'>New Charity Project</Typography>
           </Button>
         }
@@ -117,13 +115,8 @@ class CharityProject extends React.Component {
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
     return (
-      <div style={{width: "85%", margin: "auto"}} className="topMargin">
+      <div style={{width: "85%", margin: "auto", marginTop: theme.mediumMargin }} >
         <CharityProjectCardLarge charityProject={this.state.charityProject} width={"80%"} showLongDescription={true}/>
-        { userRole() >= Role.Editor && 
-          <Button href={`/edit-charity-project/${this.state.charityProject.Name}`} variant="contained" className="topMargin" >
-            <Typography variant='body1'>Edit</Typography>
-          </Button>
-        }
       </div>
     );
   }
@@ -216,12 +209,12 @@ class ManageCharityProject extends React.Component {
       technologySelects.push(<TechnologySelect name={technology.name} error={technology.error} onChange={this.handleTechnologySelectChange} index={i} key={i} technologies={this.state.technologies}/>)
     })
     return (
-      <Stack direction="row" spacing={2} justifyContent="center" className="topMargin">
-        <FormGroup style={{width: "60%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
+      <Stack direction="row" spacing={2} justifyContent="center" sx={{ width: "80%", margin: "auto", marginTop: theme.mediumMargin }}>
+        <FormGroup style={{width: "100%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
           <h2>Charity Project</h2>
           <TextField
             label="Name"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             required
             value={this.state.charityProject.name.value}
@@ -236,7 +229,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Summary"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             required
             value={this.state.charityProject.shortDescription.value}
@@ -251,7 +244,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Description"
-            className="topMargin"
+            sx={{ marginTop: theme.smalsmalln }}
             size="small"
             value={this.state.charityProject.longDescription}
             onChange={(e) => {
@@ -261,7 +254,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Charity Name"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             value={this.state.charityProject.charityName}
             onChange={(e) => {
@@ -271,7 +264,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Charity Email"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             value={this.state.charityProject.charityEmail}
             onChange={(e) => {
@@ -281,7 +274,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Project Email"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             required
             value={this.state.charityProject.projectEmail.value}
@@ -296,7 +289,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Location"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             required
             value={this.state.charityProject.location.value}
@@ -318,7 +311,7 @@ class ManageCharityProject extends React.Component {
             variant="contained"
             size='small'
             style={{width: "max-content"}}
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             onClick={() => {
               this.state.charityProject.technologies.push({ name: '', error: false, key: this.state.charityProject.technologies.length})
               this.setState(this.state)
@@ -330,7 +323,7 @@ class ManageCharityProject extends React.Component {
             variant="contained"
             size='small'
             style={{width: "max-content"}}
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             onClick={this.createCharityProject}
           >
             { this.props.method === "post" ? "Create" : "Update" }
@@ -349,11 +342,11 @@ class ManageCharityProject extends React.Component {
           }
         </FormGroup>
 
-        <FormGroup style={{width: "20%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
+        <FormGroup style={{width: "100%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
           <h2>Technology</h2>
           <TextField
             label="Name"
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             required
             error={this.state.technology.name.error}
@@ -369,7 +362,7 @@ class ManageCharityProject extends React.Component {
             variant="contained"
             size='small'
             style={{width: "max-content"}}
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             component="label"
             onChange={() => this.setState({...this.state, technology: {...this.state.technology, image: document.getElementById('techFile').files[0]}})}
           >
@@ -380,7 +373,7 @@ class ManageCharityProject extends React.Component {
             variant="contained"
             size='small'
             style={{width: "max-content"}}
-            className="topMargin"
+            sx={{ marginTop: theme.smallMargin }}
             onClick={this.createTechnology}
           >
             Create

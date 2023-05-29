@@ -6,11 +6,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
 import {} from '@mui/icons-material';
-import { Button, Card, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea} from '@mui/material';
+import { Button, Card, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea, CssBaseline} from '@mui/material';
 import axios from 'axios';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
 
-import './index.css';
+import {ThemeProvider} from '@emotion/react';
+import {darkTheme, lightTheme, theme} from './theme.js';
 
 const fontSize = () => ({
     fontSize: "0.5rem"
@@ -43,10 +44,10 @@ class UserManagement extends React.Component {
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
     return (
-      <div style={{display: "flex", flexDirection: "column", minWidth: "max-content", width: "50%", margin: "auto", }} className="topMargin">
+      <div style={{display: "flex", flexDirection: "column", minWidth: "max-content", width: "50%", margin: "auto", marginTop: theme.smallMargin }}>
         {
           this.state.users.map((user, i) =>
-            <Card style={{ display: "flex", gap: "3rem", padding: "1rem" }} variant="outlined" key={i} className="topMargin">
+            <Card sx={{ display: "flex", gap: "3rem", padding: "1rem", marginTop: theme.smallMargin }} variant="outlined" key={i} >
               <CardContent style={{flexGrow: 1, margin: "auto", padding: 0}}>
                 <Typography>{ user.Username }</Typography>
               </CardContent>
@@ -139,11 +140,10 @@ class Register extends React.Component {
 
   render() {
     return (
-      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto"}} className="topMargin">
+      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto", marginTop: theme.mediumMargin }} >
         <h2>Register</h2>
         <TextField
           label="Username"
-          className="topMargin"
           size="small"
           required
           error={this.state.username.error}
@@ -158,7 +158,7 @@ class Register extends React.Component {
         <TextField
           label="Password"
           type='password'
-          className="topMargin"
+          sx={{ marginTop: theme.smallMargin }}
           size="small"
           required
           error={this.state.password.error}
@@ -174,15 +174,15 @@ class Register extends React.Component {
           onClick={this.register}
           variant="contained"
           size='small'
-          className="topMargin"
+          sx={{ marginTop: theme.smallMargin }}
         >
           Register
         </Button>
         <Button
-          href="/register"
+          href="/login"
           size='small'
           style={{width: "max-content"}}
-          className="topMargin"
+          sx={{ marginTop: theme.smallMargin }}
         >
           Login
         </Button>
@@ -232,11 +232,10 @@ class Login extends React.Component {
 
   render() {
     return (
-      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto"}} className="topMargin">
+      <FormGroup style={{width: "50%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px", margin: "auto", marginTop: theme.mediumMargin }} >
         <h2>Login</h2>
         <TextField
           label="Username"
-          className="topMargin"
           size="small"
           required
           error={this.state.username.error}
@@ -251,7 +250,7 @@ class Login extends React.Component {
         <TextField
           label="Password"
           type='password'
-          className="topMargin"
+          sx={{ marginTop: theme.smallMargin }}
           size="small"
           required
           error={this.state.password.error}
@@ -268,7 +267,7 @@ class Login extends React.Component {
           variant="contained"
           size='small'
           style={{width: "max-content"}}
-          className="topMargin"
+          sx={{ marginTop: theme.smallMargin }}
         >
           Login
         </Button>
@@ -276,7 +275,7 @@ class Login extends React.Component {
           href="/register"
           size='small'
           style={{width: "max-content"}}
-          className="topMargin"
+          sx={{ marginTop: theme.smallMargin }}
         >
           Register
         </Button>
@@ -284,16 +283,26 @@ class Login extends React.Component {
     )
   }
 }
-          //<Button variant="contained" style={{...fontSize(), ...{marginTop: "10px", width: "20%"}}}>Create</Button>
+
 class App extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {}
+  constructor() {
+    super()
+    let darkThemePreferenceExists = localStorage.getItem("isDarkTheme") !== null
+    let darkThemePreferred = false;
+    if (darkThemePreferenceExists) {
+      darkThemePreferred = localStorage.getItem("isDarkTheme") === "true"
+    }
+    this.state = {
+      isDarkTheme: darkThemePreferred,
+    }
   }
+
   render() {
     return (
+      <ThemeProvider theme={this.state.isDarkTheme ? darkTheme : lightTheme}>
+      <CssBaseline />
       <div style={{display: "flex"}}>
-        <NavigationDrawer />
+        <NavigationDrawer isDarkTheme={this.state.isDarkTheme} onThemeToggled={this.handleThemeToggled} />
 
       <BrowserRouter>
         <Routes>
@@ -308,7 +317,13 @@ class App extends React.Component {
         </Routes>
       </BrowserRouter>
       </div>
+      </ThemeProvider>
     )
+  }
+
+  handleThemeToggled = (e) => {
+    localStorage.setItem("isDarkTheme", e.target.checked)
+    this.setState({ isDarkTheme: localStorage.getItem("isDarkTheme") === "true" })
   }
 }
 

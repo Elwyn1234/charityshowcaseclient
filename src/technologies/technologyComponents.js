@@ -1,7 +1,6 @@
 import React from 'react';
 import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
-
-import '../index.css';
+import {theme} from '../theme';
 
 export { TechnologySelect }
 
@@ -12,7 +11,7 @@ class TechnologySelect extends React.Component {
       menuItems.push(<MenuItem value={this.props.technologies[i]} dense={true} key={i}>{this.props.technologies[i]}</MenuItem>)
     }
     return (
-      <FormControl style={{width: "30%"}} size="small" className="topMargin">
+      <FormControl sx={{width: "30%", marginTop: theme.mediumMargin }} size="small" >
         <InputLabel id="tech-stack-label1">{`Tech ${this.props.index + 1}`}</InputLabel>
         <Select
           labelId='tech-stack-label1'

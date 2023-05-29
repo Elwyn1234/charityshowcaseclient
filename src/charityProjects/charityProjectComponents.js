@@ -1,11 +1,10 @@
 import { userRole, Role } from '../role.js';
+import { theme } from "../theme.js"
 
 import React from 'react';
 import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
 import { Button, Card, CardHeader, CardActions, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea} from '@mui/material';
 import axios from 'axios';
-
-import '../index.css';
 
 export { CharityProjectCardLarge, CharityProjectCardMedium }
 
@@ -18,7 +17,7 @@ class CharityProjectCardLarge extends React.Component {
           <Typography variant='body1' >{ this.props.charityProject.ShortDescription }</Typography>
 
           { this.props.charityProject.Location &&
-            <div style={{display: "flex"}} className="topMargin">
+            <div style={{ marginTop: theme.smallMargin, display: "flex" }}>
               <Place />
               <Typography variant='body1'>{ this.props.charityProject.Location }</Typography>
             </div>
@@ -46,7 +45,7 @@ class CharityProjectCardLarge extends React.Component {
 
         <CardContent >
           <Typography variant='body1'>{ this.props.charityProject.LongDescription }</Typography>
-          <Divider className="topMargin"/> // TODO: why is this css class not working
+          <Divider sx={{ marginTop: theme.smallMargin }}/>
         </CardContent>
         <CharityProjectCardActions charityProject={this.props.charityProject}/>
       </Card>
@@ -57,7 +56,7 @@ class CharityProjectCardLarge extends React.Component {
 class CharityProjectCardMedium extends React.Component {
   render() {
     return ( // Styling has to be applied here on the Card instead of on the CharityProjectCard
-      <Card variant="outlined" style={{width: this.props.width, marginTop: 40, display: "flex", flexDirection: "column", flexGrow: 1 }}>
+      <Card variant="outlined" sx={{width: this.props.width, marginTop: theme.mediumMargin, display: "flex", flexDirection: "column", flexGrow: 1 }}>
 
         <CardActionArea href={`/charity-project/${this.props.charityProject.Name}`} style={{flexGrow: 1}} >
           <CardHeader title={this.props.charityProject.Name} subheader={this.props.charityProject.CharityName} />
@@ -79,9 +78,9 @@ class CharityProjectCardTechnologies extends React.Component {
   render() {
     return (
       <CardContent>
-        <TechnologyIcon technology={this.props.technologies[0]} className="topMargin" />
-        <TechnologyIcon technology={this.props.technologies[1]} style={{marginLeft: 5}} className="topMargin" />
-        <TechnologyIcon technology={this.props.technologies[2]} style={{marginLeft: 5}} className="topMargin" />
+        <TechnologyIcon technology={this.props.technologies[0]} style={{ marginTop: theme.smallMargin }} />
+        <TechnologyIcon technology={this.props.technologies[1]} style={{marginLeft: 5, marginTop: theme.smallMargin }} />
+        <TechnologyIcon technology={this.props.technologies[2]} style={{marginLeft: 5, marginTop: theme.smallMargin }} />
       </CardContent>
     );
   }
