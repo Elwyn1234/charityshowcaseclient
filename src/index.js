@@ -80,11 +80,16 @@ class UserManagement extends React.Component {
           </List>
         </Paper>
 
-        <EditUserDialog
-            user={this.state.users[this.state.currentUserIndex]}
-            open={this.state.editing}
-            onConfirm={this.amendUser}
-            onCancel={() => { this.setState({ ...this.state, editing: false }); }}/>
+        { 
+          // Only create the component when the edit button is clicked because until then,
+          // we do not know what user is to be edited (passed to the component).
+          this.state.editing &&
+            <EditUserDialog
+                user={this.state.users[this.state.currentUserIndex]}
+                open={this.state.editing}
+                onConfirm={this.amendUser}
+                onCancel={() => { this.setState({ ...this.state, editing: false }); }}/>
+        }
         <DeleteUserDialog 
             username={this.state.users[this.state.currentUserIndex].Username}
             open={this.state.deleting}
@@ -98,10 +103,10 @@ class UserManagement extends React.Component {
     this.setState({ ...this.state, deleting: false });
   }
 
-  amendUser = () => {
-    this.setState({ ...this.state, editing: false });
-
-    let user = this.state.users[this.state.currentUserIndex]
+  amendUser = (user) => {
+    this.state.editing = false;
+    this.state.users[this.state.currentUserIndex] = user
+    this.setState(this.state);
 
     let jsonUser = JSON.stringify({
       username: user.Username,
@@ -128,7 +133,7 @@ class EditUserDialog extends React.Component {
   render() {
     return (
       // onFocus has to be used to pull the latest props value that is passed to the component.
-      <Dialog open={this.props.open} onClose={this.props.onCancel} onFocus={() => this.setState({ ...this.state, user: cloneDeep(this.props.user) })}>
+      <Dialog open={this.props.open} onClose={this.props.onCancel} >
         <DialogTitle>Edit User's Details</DialogTitle>
 
         <DialogContent >
@@ -154,7 +159,7 @@ class EditUserDialog extends React.Component {
 
         <DialogActions>
           <Button onClick={this.props.onCancel}>Cancel</Button>
-          <Button onClick={this.props.onConfirm}>Submit</Button>
+          <Button onClick={() => this.props.onConfirm(cloneDeep(this.state.user))}>Submit</Button>
         </DialogActions>
       </Dialog>
     )
