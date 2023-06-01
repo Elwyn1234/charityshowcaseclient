@@ -1,13 +1,13 @@
 import { CharityProjectList, CharityProject, ManageCharityProject } from './charityProjects/charityProjectViews.js';
 import { userRole, Role, stringToRole, roleToString } from './role.js';
 import { NavigationDrawer } from './navigationDrawer.js';
+import { UsersView } from './users/UsersViews.js';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
 
 import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
-import {} from '@mui/icons-material';
 import { Button, Card, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea, CssBaseline, List, ListItemButton, ListItem, ListItemIcon, Checkbox, ListItemText, ListItemSecondaryAction, Box, Container, Paper, ListItemAvatar, Avatar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions} from '@mui/material';
 
 import axios from 'axios';
@@ -19,169 +19,6 @@ import {darkTheme, lightTheme, theme} from './theme.js';
 const fontSize = () => ({
     fontSize: "0.5rem"
 })
-
-class UserManagement extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      loading: true,
-      editing: false,
-      deleting: false,
-      currentUserIndex: 2
-    }
-
-    axios.get('http://localhost:8743/users/', { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
-      .then((users) => {
-        this.state.loading = false
-        this.state.users = users.data.map((user) => {
-          user.Role = stringToRole(user.Role)
-          return user
-        })
-        this.setState(this.state)
-      }).catch((err) => { 
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });
-  }
-
-  render() {
-    if (this.state.loading)
-      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
-
-    return (
-      <Box sx={{ width: "100%", maxWidth: "500px", margin: "auto" }}>
-        <Typography variant='h4' sx={{ textAlign: "center", marginTop: theme.mediumMargin }} >Users</Typography>
-
-        <Paper variant='outlined' sx={{ marginTop: theme.smallMargin }} >
-          <List sx={{ marginTop: 0, padding: 0 }}>
-            {
-              this.state.users.map((user, i) => {
-                return (
-                  <ListItem key={i} >
-                    <ListItemAvatar >
-                      <Avatar alt={user.Username} src="/assets/icons/react2.svg" />
-                    </ListItemAvatar>
-                    <ListItemText primary={user.Username} secondary={roleToString(user.Role)} />
-                    <ListItemIcon>
-                      <IconButton aria-label="Edit" onClick={() => { this.setState({ ...this.state, editing: true, currentUserIndex: i }); }}>
-                        <Edit />
-                      </IconButton>
-                    </ListItemIcon>
-                    <ListItemIcon>
-                      <IconButton aria-label="Delete" onClick={() => { this.setState({ ...this.state, deleting: true, currentUserIndex: i }); }}>
-                        <Delete />
-                      </IconButton>
-                    </ListItemIcon>
-                  </ListItem>
-                )
-              })
-            }
-          </List>
-        </Paper>
-
-        { 
-          // Only create the component when the edit button is clicked because until then,
-          // we do not know what user is to be edited (passed to the component).
-          this.state.editing &&
-            <EditUserDialog
-                user={this.state.users[this.state.currentUserIndex]}
-                open={this.state.editing}
-                onConfirm={this.amendUser}
-                onCancel={() => { this.setState({ ...this.state, editing: false }); }}/>
-        }
-        <DeleteUserDialog 
-            username={this.state.users[this.state.currentUserIndex].Username}
-            open={this.state.deleting}
-            onConfirm={this.deleteUser}
-            onCancel={() => { this.setState({ ...this.state, deleting: false }); }} />
-      </Box>
-    );
-  }
-
-  deleteUser = () => {
-    this.setState({ ...this.state, deleting: false });
-  }
-
-  amendUser = (user) => {
-    this.state.editing = false;
-    this.state.users[this.state.currentUserIndex] = user
-    this.setState(this.state);
-
-    let jsonUser = JSON.stringify({
-      username: user.Username,
-      role: roleToString(user.Role)
-    })
-    axios.put('http://localhost:8743/users/', jsonUser, { withCredentials: true })
-      .then((users) => {
-      }).catch((err) => { 
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });
-  }
-}
-
-class EditUserDialog extends React.Component {
-  constructor(props) {
-    super(props)
-    // Deep clone avoids horrible bug where changing this.state (a reference), changes the 
-    // object that the parent component passed to this component via props...
-    // Note that this cloning has likely been done in other parts of the component as well.
-    this.state = { user: cloneDeep(this.props.user) }
-  }
-
-  render() {
-    return (
-      // onFocus has to be used to pull the latest props value that is passed to the component.
-      <Dialog open={this.props.open} onClose={this.props.onCancel} >
-        <DialogTitle>Edit User's Details</DialogTitle>
-
-        <DialogContent >
-          <InputLabel id="user-select-label">Role</InputLabel>
-          <Select
-            labelId='user-select-label'
-            label={`Role`}
-            value={this.state.user.Role}
-            required
-            onChange={(e) => {
-              if (e.target.value !== null && e.target.value !== '') { // TODO: is this condition redundant
-                this.state.user.Role = e.target.value
-                this.setState(this.state) // required to update UI
-              }
-            }}
-          >
-            <MenuItem value={Role.User} dense={true} key={0}>User</MenuItem>
-            <MenuItem value={Role.Editor} dense={true} key={1}>Editor</MenuItem>
-            <MenuItem value={Role.Creator} dense={true} key={2}>Creator</MenuItem>
-            <MenuItem value={Role.Admin} dense={true} key={3}>Admin</MenuItem>
-          </Select>
-        </DialogContent >
-
-        <DialogActions>
-          <Button onClick={this.props.onCancel}>Cancel</Button>
-          <Button onClick={() => this.props.onConfirm(cloneDeep(this.state.user))}>Submit</Button>
-        </DialogActions>
-      </Dialog>
-    )
-  }
-}
-
-class DeleteUserDialog extends React.Component {
-  render() {
-    return (
-      <Dialog open={this.props.open} onClose={this.props.onCancel}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent >
-          <DialogContentText >Are you sure you want to delete {this.props.username}?</DialogContentText >
-        </DialogContent >
-        <DialogActions>
-          <Button onClick={this.props.onCancel}>Cancel</Button>
-          <Button onClick={this.props.onConfirm}>Confirm</Button>
-        </DialogActions>
-      </Dialog>
-    )
-  }
-}
 
 class Register extends React.Component {
   constructor(props) {
@@ -394,7 +231,7 @@ class App extends React.Component {
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
-          <Route path="/user-management" element={<UserManagement/>}/>
+          <Route path="/user-management" element={<UsersView/>}/>
           <Route path="/login" element={<Login/>}/>
           <Route path="/register" element={<Register/>}/>
         </Routes>
@@ -444,7 +281,7 @@ root.render(<App />)
 //    Auth and Users
 //      Each user should have an associated email
 //      Roles: creators can add items whilst editors can edit items (maybe this will be revised after my assignment)
-//      Refactor Login, Register (and maybe EditUser) into UserManagement component (only if it speeds up development)
+//      Refactor Login, Register (and maybe EditUser) into UsersView component (only if it speeds up development)
 //    Add/Edit/Delete Items
 //      how is validation for all user entrypoints
 //      Before taking this too far, ask for requirements
