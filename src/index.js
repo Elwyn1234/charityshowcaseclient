@@ -1,14 +1,17 @@
 import { CharityProjectList, CharityProject, ManageCharityProject } from './charityProjects/charityProjectViews.js';
 import { userRole, Role, stringToRole, roleToString } from './role.js';
 import { NavigationDrawer } from './navigationDrawer.js';
+import { UsersView } from './users/UsersViews.js';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
-import {} from '@mui/icons-material';
-import { Button, Card, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea, CssBaseline} from '@mui/material';
-import axios from 'axios';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
+
+import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
+import { Button, Card, CardContent, CircularProgress, FormControl, FormGroup, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography, Divider, CardActionArea, CssBaseline, List, ListItemButton, ListItem, ListItemIcon, Checkbox, ListItemText, ListItemSecondaryAction, Box, Container, Paper, ListItemAvatar, Avatar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions} from '@mui/material';
+
+import axios from 'axios';
+import { cloneDeep } from 'lodash';
 
 import {ThemeProvider} from '@emotion/react';
 import {darkTheme, lightTheme, theme} from './theme.js';
@@ -16,89 +19,6 @@ import {darkTheme, lightTheme, theme} from './theme.js';
 const fontSize = () => ({
     fontSize: "0.5rem"
 })
-
-class UserManagement extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      loading: true,
-    }
-
-    axios.get('http://localhost:8743/users/', { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
-      .then((users) => {
-        this.state.loading = false
-        this.state.users = users.data.map((user) => {
-          user.Role = stringToRole(user.Role)
-          return user
-        })
-        this.setState(this.state)
-      }).catch((err) => { 
-        if (err.response && err.response.status === 401) // TODO: implement else
-          window.location.replace("/login")
-      });
-  }
-
-  render() {
-    if (this.state.loading)
-      return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
-
-    return (
-      <div style={{display: "flex", flexDirection: "column", minWidth: "max-content", width: "50%", margin: "auto", marginTop: theme.smallMargin }}>
-        {
-          this.state.users.map((user, i) =>
-            <Card sx={{ display: "flex", gap: "3rem", padding: "1rem", marginTop: theme.smallMargin }} variant="outlined" key={i} >
-              <CardContent style={{flexGrow: 1, margin: "auto", padding: 0}}>
-                <Typography>{ user.Username }</Typography>
-              </CardContent>
-              <div style={{margin: "auto"}}>
-                <FormControl size="small">
-                  <InputLabel id="user-select-label">Role</InputLabel>
-                  <Select
-                    labelId='user-select-label'
-                    label={`Role`}
-                    value={user.Role}
-                    required
-                    onChange={(e) => {
-                      if (e.target.value !== null && e.target.value !== '') { // TODO: is this condition redundant
-                        this.state.users[i].Role = e.target.value
-                        this.setState(this.state)
-                        // TODO: do we need to setState here
-                      }
-                    }}
-                  >
-                    <MenuItem value={Role.User} dense={true} key={0}>User</MenuItem>
-                    <MenuItem value={Role.Editor} dense={true} key={1}>Editor</MenuItem>
-                    <MenuItem value={Role.Creator} dense={true} key={2}>Creator</MenuItem>
-                    <MenuItem value={Role.Admin} dense={true} key={3}>Admin</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <Button
-                onClick={(e) => {
-                  let jsonUser = JSON.stringify({
-                    username: user.Username,
-                    role: roleToString(this.state.users[i].Role)
-                  })
-                  axios.put('http://localhost:8743/users/', jsonUser, { withCredentials: true })
-                    .then((users) => {
-                    }).catch((err) => { 
-                      if (err.response && err.response.status === 401) // TODO: implement else
-                        window.location.replace("/login")
-                    });
-                }}
-                variant="contained"
-                size='small'
-                style={{height: "2.5rem", width: "max-content", margin: "auto"}}
-              >
-                Save
-              </Button>
-            </Card>
-        )}
-      </div>
-    );
-  }
-}
 
 class Register extends React.Component {
   constructor(props) {
@@ -311,7 +231,7 @@ class App extends React.Component {
           <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
           <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
           <Route path="/charity-project/:name" element={<CharityProject/>}/>
-          <Route path="/user-management" element={<UserManagement/>}/>
+          <Route path="/user-management" element={<UsersView/>}/>
           <Route path="/login" element={<Login/>}/>
           <Route path="/register" element={<Register/>}/>
         </Routes>
@@ -361,7 +281,7 @@ root.render(<App />)
 //    Auth and Users
 //      Each user should have an associated email
 //      Roles: creators can add items whilst editors can edit items (maybe this will be revised after my assignment)
-//      Refactor Login, Register (and maybe EditUser) into UserManagement component (only if it speeds up development)
+//      Refactor Login, Register (and maybe EditUser) into UsersView component (only if it speeds up development)
 //    Add/Edit/Delete Items
 //      how is validation for all user entrypoints
 //      Before taking this too far, ask for requirements
