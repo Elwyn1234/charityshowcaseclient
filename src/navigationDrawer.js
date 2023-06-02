@@ -1,7 +1,8 @@
+import { paths } from './constants.js';
 import { userRole, Role } from './role.js';
 
 import React, {useState} from 'react';
-import { Home as HomeIcon, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, DarkMode, LightMode } from '@mui/icons-material';
+import { Home as HomeIcon, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AppRegistration, DarkMode, LightMode } from '@mui/icons-material';
 import {} from '@mui/icons-material';
 import { Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Switch, Toolbar, Tooltip, Typography} from '@mui/material';
 import axios from 'axios';
@@ -14,6 +15,98 @@ class NavigationDrawer extends React.Component {
   }
   
   render() {
+    /**************************************************************/
+    /* List Items
+    /**************************************************************/
+
+    const homeListItem = 
+      <ListItemButton href={paths.home} selected={ window.location.pathname === paths.home }>
+        <ListItemIcon>
+          <HomeIcon />
+        </ListItemIcon>
+        <ListItemText primary="Home" />
+      </ListItemButton>
+
+    const charityProjectsListItem = 
+      <ListItemButton href={paths.charityProjectList} selected={ window.location.pathname === paths.charityProjectList }>
+        <ListItemIcon>
+          <GroupWork />
+        </ListItemIcon>
+        <ListItemText primary="Charity Projects" />
+      </ListItemButton>
+    
+    const charitiesListItem = 
+      <ListItemButton href={paths.charityList} selected={ window.location.pathname === paths.charityList}>
+        <ListItemIcon>
+          <VolunteerActivism />
+        </ListItemIcon>
+        <ListItemText primary="Charities" />
+      </ListItemButton>
+
+    const contributorsListItem = 
+      <ListItemButton href={paths.contributorList} selected={ window.location.pathname === paths.contributorList}>
+        <ListItemIcon>
+          <Engineering />
+        </ListItemIcon>
+        <ListItemText primary="Contributors" />
+      </ListItemButton>
+
+    const locationsListItem =
+      <ListItemButton href={paths.locationList} selected={ window.location.pathname === paths.locationList}>
+        <ListItemIcon>
+          <LocationOn />
+        </ListItemIcon>
+        <ListItemText primary="Locations" />
+      </ListItemButton>
+
+    const technologiesListItem =
+      <ListItemButton href={paths.technologyList} selected={ window.location.pathname === paths.technologyList}>
+        <ListItemIcon>
+          <Code />
+        </ListItemIcon>
+        <ListItemText primary="Technologies" />
+      </ListItemButton>
+
+    const usersListItem =
+      <ListItemButton href={paths.userList} selected={ window.location.pathname === paths.userList}>
+        <ListItemIcon>
+          <Person />
+        </ListItemIcon>
+        <ListItemText primary="Users" />
+      </ListItemButton>
+
+    const archiveListItem =
+      <ListItemButton href={paths.archivedCharityProjectList} selected={ window.location.pathname === paths.archivedCharityProjectList}>
+        <ListItemIcon>
+          <Archive />
+        </ListItemIcon>
+        <ListItemText primary="Archive" />
+      </ListItemButton>
+
+    const loginListItem =
+      <ListItemButton href={paths.login} selected={ window.location.pathname === paths.login}>
+        <ListItemIcon>
+          <LoginIcon />
+        </ListItemIcon>
+        <ListItemText>Login</ListItemText>
+      </ListItemButton>
+
+    const registerListItem =
+      <ListItemButton href={paths.register} selected={ window.location.pathname === paths.register}>
+        <ListItemIcon>
+          <AppRegistration />
+        </ListItemIcon>
+        <ListItemText>Register</ListItemText>
+      </ListItemButton>
+
+    const logoutListItem =
+      <ListItemButton onClick={logout} >
+        <ListItemIcon>
+          <Logout />
+        </ListItemIcon>
+        <ListItemText>Logout</ListItemText>
+      </ListItemButton>
+
     return (
       <Drawer anchor='left' open={true} variant='permanent' sx={{
           width: 254,
@@ -26,20 +119,21 @@ class NavigationDrawer extends React.Component {
         <Divider />
         <List>
           <ListSubheader>General</ListSubheader>
-          <HomeListItem />
-          <CharityProjectsListItem />
-          <CharitiesListItem />
-          <ContributorsListItem />
-          <LocationsListItem />
-          <TechnologiesListItem />
+          { homeListItem }
+          { charityProjectsListItem }
+          { charitiesListItem }
+          { contributorsListItem }
+          { locationsListItem }
+          { technologiesListItem }
 
           { userRole() >= Role.Creator && <Divider /> }
           { userRole() >= Role.Creator && <ListSubheader>Administration</ListSubheader> }
-          { userRole() >= Role.Admin && <UsersListItem /> }
-          { userRole() >= Role.Creator && <ArchiveListItem /> }
+          { userRole() >= Role.Admin && usersListItem }
+          { userRole() >= Role.Creator && archiveListItem }
 
           <Divider />
-          { isLoggedIn() ? <LogoutListItem /> : <LoginListItem /> }
+          { isLoggedIn() ? logoutListItem : loginListItem }
+          { isLoggedIn() ? null : registerListItem }
 
           <ListItem>
             <ListItemIcon>
@@ -55,141 +149,7 @@ class NavigationDrawer extends React.Component {
 }
 
 /**************************************************************/
-/* List Items
-/**************************************************************/
-
-class HomeListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton>
-        <ListItemIcon>
-          <HomeIcon />
-        </ListItemIcon>
-        <ListItemText primary="Home" />
-      </ListItemButton>
-    )
-  }
-}
-
-class CharityProjectsListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton href='/'>
-        <ListItemIcon>
-          <GroupWork />
-        </ListItemIcon>
-        <ListItemText primary="Charity Projects" />
-      </ListItemButton>
-    )
-  }
-}
-
-class CharitiesListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton>
-        <ListItemIcon>
-          <VolunteerActivism />
-        </ListItemIcon>
-        <ListItemText primary="Charities" />
-      </ListItemButton>
-    )
-  }
-}
-
-class ContributorsListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton>
-        <ListItemIcon>
-          <Engineering />
-        </ListItemIcon>
-        <ListItemText primary="Contributors" />
-      </ListItemButton>
-    )
-  }
-}
-
-class LocationsListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton>
-        <ListItemIcon>
-          <LocationOn />
-        </ListItemIcon>
-        <ListItemText primary="Locations" />
-      </ListItemButton>
-    )
-  }
-}
-
-class TechnologiesListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton>
-        <ListItemIcon>
-          <Code />
-        </ListItemIcon>
-        <ListItemText primary="Technologies" />
-      </ListItemButton>
-    )
-  }
-}
-
-class UsersListItem extends React.Component {
-  render() {
-    return (
-      <ListItemButton href="/user-management">
-        <ListItemIcon>
-          <Person />
-        </ListItemIcon>
-        <ListItemText primary="Users" />
-      </ListItemButton>
-    )
-  }
-}
-
-class ArchiveListItem extends React.Component {
-  render() {
-    return (
-    <ListItemButton href="/archive">
-      <ListItemIcon>
-        <Archive />
-      </ListItemIcon>
-      <ListItemText primary="Archive" />
-    </ListItemButton>
-    )
-  }
-}
-
-class LoginListItem extends React.Component {
-  render() {
-    return (
-    <ListItemButton href="/login">
-      <ListItemIcon>
-        <LoginIcon />
-      </ListItemIcon>
-      <ListItemText>Login</ListItemText>
-    </ListItemButton>
-    )
-  }
-}
-
-class LogoutListItem extends React.Component {
-  render() {
-    return (
-    <ListItemButton onClick={logout}>
-      <ListItemIcon>
-        <Logout />
-      </ListItemIcon>
-      <ListItemText>Logout</ListItemText>
-    </ListItemButton>
-    )
-  }
-}
-
-/**************************************************************/
-/* Functions
+/* AAAAAAAAAAAA
 /**************************************************************/
 
 const logout = () => {

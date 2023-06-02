@@ -15,6 +15,7 @@ import { cloneDeep } from 'lodash';
 
 import {ThemeProvider} from '@emotion/react';
 import {darkTheme, lightTheme, theme} from './theme.js';
+import { paths } from './constants.js';
 
 const fontSize = () => ({
     fontSize: "0.5rem"
@@ -226,14 +227,15 @@ class App extends React.Component {
 
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<CharityProjectList archive="notArchived"/>}/>
-          <Route path="/archive" element={<CharityProjectList archive="archived"/>}/>
-          <Route path="/create-charity-project" element={<ManageCharityProject method="post"/>}/>
-          <Route path="/edit-charity-project/:name" element={<ManageCharityProject method="put"/>}/>
-          <Route path="/charity-project/:name" element={<CharityProject/>}/>
-          <Route path="/user-management" element={<UsersView/>}/>
-          <Route path="/login" element={<Login/>}/>
-          <Route path="/register" element={<Register/>}/>
+          <Route path={paths.home} element={<CharityProjectList archive="notArchived"/>}/>
+          <Route path={paths.charityProjectList} element={<CharityProjectList archive="notArchived"/>}/>
+          <Route path={paths.archivedCharityProjectList} element={<CharityProjectList archive="archived"/>}/>
+          <Route path={paths.charityProjectCreate} element={<ManageCharityProject method="post"/>}/>
+          <Route path={paths.charityProjectsAmend} element={<ManageCharityProject method="put"/>}/>
+          <Route path={paths.charityProject} element={<CharityProject/>}/>
+          <Route path={paths.userList} element={<UsersView/>}/>
+          <Route path={paths.login} element={<Login/>}/>
+          <Route path={paths.register} element={<Register/>}/>
         </Routes>
       </BrowserRouter>
       </div>
