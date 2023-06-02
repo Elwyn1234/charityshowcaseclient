@@ -3,11 +3,12 @@ import { TechnologySelect } from "../technologies/technologyComponents";
 import { userRole, Role } from '../role.js';
 
 import React from 'react';
-import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, AddDarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
-import { Button, CircularProgress, FormGroup, TextField, Typography, } from '@mui/material';
+import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, Add, DarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
+import { Button, CircularProgress, Fab, FormGroup, TextField, Typography, } from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
 import {theme} from "../theme";
+import {paths} from "../constants";
 
 export { CharityProjectList, CharityProject, ManageCharityProject }
 
@@ -35,17 +36,23 @@ class CharityProjectList extends React.Component {
     if (this.state.loading)
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
+    const addCharityProjectFab =
+      <Fab variant="extended" color="primary" href={paths.charityProjectCreate} >
+        <Add sx={{ marginRight: 1 }} />
+        Create
+      </Fab>
+
+
+
     return (
       <div>
-        <Typography variant='h4' sx={{ flexBasis: "100%", textAlign: "center", marginTop: theme.mediumMargin  }} >Charity Projects</Typography>
-        <TextField
-          label="Name"
-          size="small"
-          onChange={(e) => {
-            this.state.filter = e.target.value
-            this.setState(this.state)
-          }}
-        />
+        <div style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: theme.mediumMargin }} >
+          <Typography variant='h4' >Charity Projects</Typography>
+          { userRole() >= Role.Creator && addCharityProjectFab }
+        </div >
+        <TextField label="Name" size="small" onChange={this.onSearch} />
+
+
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto", marginTop: theme.mediumMargin }} >
           {
             this.state.charityProjects.filter((value) => {
@@ -80,13 +87,13 @@ class CharityProjectList extends React.Component {
               />)
           }
         </div>
-        { userRole() >= Role.Creator &&
-          <Button href="/create-charity-project" variant="contained" >
-            <Typography variant='body1'>New Charity Project</Typography>
-          </Button>
-        }
       </div>
     );
+  }
+
+  onSearch = (e) => {
+    this.state.filter = e.target.value
+    this.setState(this.state)
   }
 }
 
