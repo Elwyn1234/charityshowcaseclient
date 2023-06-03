@@ -4,7 +4,7 @@ import { userRole, Role } from '../role.js';
 
 import React from 'react';
 import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, Add, DarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
-import { Box, Button, CircularProgress, Divider, Drawer, Fab, FormGroup, TextField, Toolbar, Typography, } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Divider, Drawer, Fab, FormGroup, Snackbar, TextField, Toolbar, Typography, } from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
 import {theme} from "../theme";
@@ -18,8 +18,14 @@ class CharityProjectList extends React.Component {
 
     this.state = {
       searchFilter: "",
-      technologiesFilter: [],
-      technologies: [],
+      technologies: {
+        technologies: [],
+        filter: [],
+        fetchError: {
+          value: "",
+          error: false
+        }
+      },
       loading: true,
     }
 
@@ -36,9 +42,11 @@ class CharityProjectList extends React.Component {
     axios.get('http://localhost:8743/technologies', { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
       .then((response) => {
         let technologies = response.data
-        this.state.technologies = technologies
+        this.state.technologies.technologies = technologies
         this.setState(this.state)
       }).catch((err) => { //TODO
+        this.state.technologies.fetchError.error = true
+        this.state.technologies.fetchError.value = "Failed to fetch the list of available technologies."
       });
   }
 
@@ -124,18 +132,29 @@ class CharityProjectList extends React.Component {
             <FormGroup >
               <TextField label="Name" size="small" onChange={this.onSearch} />
               <TechnologySelect 
-                technologies={this.state.technologies}
-                selectedTechnologies={this.state.technologiesFilter}
+                technologies={this.state.technologies.technologies}
+                selectedTechnologies={this.state.technologies.filter}
                 onChange={this.onTechnologiesFilterChange} />
             </FormGroup>
           </Stack>
         </Drawer>
+        <Snackbar open={this.state.technologies.fetchError.error} autoHideDuration={6000} onClose={this.onTechnologiesErrorMessageClose}>
+          <Alert severity="warning" sx={{ width: '100%' }}>
+            {this.state.technologies.fetchError.value}
+          </Alert>
+        </Snackbar>
       </Box>
     );
   }
 
+  onTechnologiesErrorMessageClose = () => {
+    this.state.technologies.fetchError.value = ""
+    this.state.technologies.fetchError.error = false
+    this.setState(this.state)
+  }
+
   onTechnologiesFilterChange = (selectedTechnologies) => {
-    this.state.technologiesFilter = selectedTechnologies
+    this.state.technologies.filter = selectedTechnologies
     this.setState(this.state)
   }
 
