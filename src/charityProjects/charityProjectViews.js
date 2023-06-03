@@ -4,7 +4,7 @@ import { userRole, Role } from '../role.js';
 
 import React from 'react';
 import { Edit, Home as HomeIcon, Place, GroupWork, VolunteerActivism, Engineering, LocationOn, Code, Person, Archive, Logout, Login as LoginIcon, Add, DarkMode, LightMode, Search, Sort, FilterList, Clear, Unarchive, Delete } from '@mui/icons-material';
-import { Button, CircularProgress, Fab, FormGroup, TextField, Typography, } from '@mui/material';
+import { Box, Button, CircularProgress, Divider, Drawer, Fab, FormGroup, TextField, Toolbar, Typography, } from '@mui/material';
 import axios from 'axios';
 import {Stack} from '@mui/system';
 import {theme} from "../theme";
@@ -45,49 +45,74 @@ class CharityProjectList extends React.Component {
 
 
     return (
-      <div>
-        <div style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: theme.mediumMargin }} >
-          <Typography variant='h4' >Charity Projects</Typography>
-          { userRole() >= Role.Creator && addCharityProjectFab }
-        </div >
-        <TextField label="Name" size="small" onChange={this.onSearch} />
+      <Box sx={{display: "flex"}}>
+
+        <Box>
+          <Box compone="main" style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: theme.mediumMargin }} >
+            <Typography variant='h4' >Charity Projects</Typography>
+            { userRole() >= Role.Creator && addCharityProjectFab }
+          </Box >
 
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto", marginTop: theme.mediumMargin }} >
-          {
-            this.state.charityProjects.filter((value) => {
-              //let match = false
-              if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.ShortDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.LongDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                value.Technologies.find((technology) => {
-                  if (technology.Name.toLowerCase().match(this.state.filter.toLowerCase()))
-                    return true
-                  return false
+
+          <Box style={{ display: "flex", flexWrap: "wrap", gap: "1%", justifyContent: "center", width: "90%", margin: "auto", marginTop: theme.mediumMargin }} >
+            {
+              this.state.charityProjects.filter((value) => {
+                //let match = false
+                if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
+                  value.ShortDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
+                  value.LongDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
+                  value.Technologies.find((technology) => {
+                    if (technology.Name.toLowerCase().match(this.state.filter.toLowerCase()))
+                      return true
+                    return false
+                  })
+                )
+                  return true
+                return false
+                /*
+                value.Technologies.forEach((technology) => {
+                  if (technology.Name.match(this.state.filter))
+                    match = true
                 })
-              )
-                return true
-              return false
-              /*
-              value.Technologies.forEach((technology) => {
-                if (technology.Name.match(this.state.filter))
-                  match = true
-              })
-              return match
-              */
-            }).map((charityProject, i) =>
-              <CharityProjectCardMedium
-                charityProject={charityProject}
-                key={i}
-                width={"19rem"}
-                showLongDescription={false}
-                removeMe={() => {
-                  this.state.charityProjects = this.state.charityProjects.filter((val, nestedIndex) => nestedIndex !== i);
-                  this.setState(this.state) }}
-              />)
-          }
-        </div>
-      </div>
+                return match
+                */
+              }).map((charityProject, i) =>
+                <CharityProjectCardMedium
+                  charityProject={charityProject}
+                  key={i}
+                  width={"19rem"}
+                  showLongDescription={false}
+                  removeMe={() => {
+                    this.state.charityProjects = this.state.charityProjects.filter((val, nestedIndex) => nestedIndex !== i);
+                    this.setState(this.state) }}
+                />)
+            }
+          </Box>
+        </Box>
+
+
+
+        <Drawer
+          sx={{
+            width: 254,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: 254,
+              boxSizing: 'border-box',
+            },
+          }}
+          variant="permanent"
+          anchor="right"
+          open={true}
+        >
+          <Toolbar>
+            <Typography variant='h6'>Search</Typography>
+          </Toolbar>
+          <Divider />
+          <TextField label="Name" size="small" onChange={this.onSearch} />
+        </Drawer>
+      </Box>
     );
   }
 
@@ -168,9 +193,6 @@ class ManageCharityProject extends React.Component {
       },
       technologies: null, // a list of all technologies from which the user can select from
     }
-    for (let i = 0; i < 3; i++) {
-      this.state.charityProject.technologies.push({ name: '', error: false })
-    }
 
     let promises = []
     promises.push(axios.get('http://localhost:8743/technologies', { withCredentials: true }))
@@ -196,9 +218,7 @@ class ManageCharityProject extends React.Component {
           this.state.charityProject.projectEmail.value = charityProject.ProjectEmail
           this.state.charityProject.location.value = charityProject.Location
           this.state.charityProject.archived = charityProject.Archived
-          this.state.charityProject.technologies = charityProject.Technologies.map((technology) => {
-            return { oldName: technology.Name, name: technology.Name, error: false }
-          })
+          this.state.charityProject.technologies = charityProject.Technologies.map((technology) => technology.Name)
         }
         this.setState(this.state)
       }).catch((err) => {
@@ -211,10 +231,14 @@ class ManageCharityProject extends React.Component {
     if (this.state.loading)
       return (<CircularProgress style={{margin: "auto", display: 'flex', marginTop: "100px"}}/>)
 
-    let technologySelects = []
-    this.state.charityProject.technologies.forEach((technology, i) => {
-      technologySelects.push(<TechnologySelect name={technology.name} error={technology.error} onChange={this.handleTechnologySelectChange} index={i} key={i} technologies={this.state.technologies}/>)
-    })
+    let technologySelect = 
+      <TechnologySelect 
+        selectedTechnologies={this.state.charityProject.technologies} 
+        onChange={this.handleTechnologySelectChange} 
+        technologies={this.state.technologies}/>
+
+
+
     return (
       <Stack direction="row" spacing={2} justifyContent="center" sx={{ width: "80%", margin: "auto", marginTop: theme.mediumMargin }}>
         <FormGroup style={{width: "100%", border: "1px solid #aaa", borderRadius: "10px", padding: "15px"}}>
@@ -251,7 +275,7 @@ class ManageCharityProject extends React.Component {
           />
           <TextField
             label="Description"
-            sx={{ marginTop: theme.smalsmalln }}
+            sx={{ marginTop: theme.smallMargin }}
             size="small"
             value={this.state.charityProject.longDescription}
             onChange={(e) => {
@@ -311,20 +335,8 @@ class ManageCharityProject extends React.Component {
           />
   
           <Stack direction="row" spacing="auto" justifyContent="center">
-            {technologySelects}
+            {technologySelect}
           </Stack>
-  
-          <Button
-            variant="contained"
-            size='small'
-            style={{width: "max-content"}}
-            sx={{ marginTop: theme.smallMargin }}
-            onClick={() => {
-              this.state.charityProject.technologies.push({ name: '', error: false, key: this.state.charityProject.technologies.length})
-              this.setState(this.state)
-            }}>
-              Add Technology
-          </Button>
   
           <Button
             variant="contained"
@@ -470,11 +482,8 @@ class ManageCharityProject extends React.Component {
       });;
   }
 
-  handleTechnologySelectChange = (name, error, i) => {
-    this.state.charityProject.technologies[i] = {
-      name: name,
-      error: error,
-    }
+  handleTechnologySelectChange = (selectedTechnologies) => {
+    this.state.charityProject.technologies = selectedTechnologies
     this.setState(this.state)
   }
 }

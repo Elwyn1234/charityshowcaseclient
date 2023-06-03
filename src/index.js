@@ -227,7 +227,6 @@ class App extends React.Component {
 
       <BrowserRouter>
         <Routes>
-          <Route path={paths.home} element={<CharityProjectList archive="notArchived"/>}/>
           <Route path={paths.charityProjectList} element={<CharityProjectList archive="notArchived"/>}/>
           <Route path={paths.archivedCharityProjectList} element={<CharityProjectList archive="archived"/>}/>
           <Route path={paths.charityProjectCreate} element={<ManageCharityProject method="post"/>}/>
