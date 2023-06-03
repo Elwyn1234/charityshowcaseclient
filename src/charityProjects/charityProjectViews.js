@@ -17,7 +17,9 @@ class CharityProjectList extends React.Component {
     super(props)
 
     this.state = {
-      filter: "",
+      searchFilter: "",
+      technologiesFilter: [],
+      technologies: [],
       loading: true,
     }
 
@@ -29,6 +31,14 @@ class CharityProjectList extends React.Component {
       }).catch((err) => { 
         if (err.response && err.response.status === 401) // TODO: implement else
           window.location.replace("/login")
+      });
+
+    axios.get('http://localhost:8743/technologies', { withCredentials: true }) // TODO: why is a slash needed before the query params, I remember this being a mystery
+      .then((response) => {
+        let technologies = response.data
+        this.state.technologies = technologies
+        this.setState(this.state)
+      }).catch((err) => { //TODO
       });
   }
 
@@ -59,11 +69,11 @@ class CharityProjectList extends React.Component {
             {
               this.state.charityProjects.filter((value) => {
                 //let match = false
-                if (value.Name.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                  value.ShortDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
-                  value.LongDescription.toLowerCase().match(this.state.filter.toLowerCase()) ||
+                if (value.Name.toLowerCase().match(this.state.searchFilter.toLowerCase()) ||
+                  value.ShortDescription.toLowerCase().match(this.state.searchFilter.toLowerCase()) ||
+                  value.LongDescription.toLowerCase().match(this.state.searchFilter.toLowerCase()) ||
                   value.Technologies.find((technology) => {
-                    if (technology.Name.toLowerCase().match(this.state.filter.toLowerCase()))
+                    if (technology.Name.toLowerCase().match(this.state.searchFilter.toLowerCase()))
                       return true
                     return false
                   })
@@ -110,14 +120,27 @@ class CharityProjectList extends React.Component {
             <Typography variant='h6'>Search</Typography>
           </Toolbar>
           <Divider />
-          <TextField label="Name" size="small" onChange={this.onSearch} />
+          <Stack direction="row" spacing={2} justifyContent="center" sx={{ marginTop: theme.smallMargin }}>
+            <FormGroup >
+              <TextField label="Name" size="small" onChange={this.onSearch} />
+              <TechnologySelect 
+                technologies={this.state.technologies}
+                selectedTechnologies={this.state.technologiesFilter}
+                onChange={this.onTechnologiesFilterChange} />
+            </FormGroup>
+          </Stack>
         </Drawer>
       </Box>
     );
   }
 
+  onTechnologiesFilterChange = (selectedTechnologies) => {
+    this.state.technologiesFilter = selectedTechnologies
+    this.setState(this.state)
+  }
+
   onSearch = (e) => {
-    this.state.filter = e.target.value
+    this.state.searchFilter = e.target.value
     this.setState(this.state)
   }
 }

@@ -12,7 +12,7 @@ class TechnologySelect extends React.Component {
           <Chip key={value} label={value} />
         ))}
       </Box>
-    
+
     return (
       <FormControl sx={{ width: "100%", marginTop: theme.mediumMargin }} size="small" >
         <InputLabel id="technologiesLabel">Technologies</InputLabel>
